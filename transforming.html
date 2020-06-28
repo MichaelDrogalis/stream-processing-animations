@@ -1,0 +1,38 @@
+<!doctype html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="styles-global.css">
+
+  </head>
+
+  <body>    
+    <svg class="transforming" width="1000" height="300" style="display: block; margin: auto;">
+      <path d="M 450,50 h -50 v 50" fill="none" stroke-width="1" class="persistent-query"/>
+      <path d="M 550,50 h 50 v 50" fill="none" stroke-width="1" class="persistent-query"/>
+      <path d="M 400,200 v 50 h 50" fill="none" stroke-width="1" class="persistent-query"/>
+      <path d="M 600,200 v 50 h -50" fill="none" stroke-width="1" class="persistent-query"/>
+
+      <g class="events">
+        <rect height="25" width="25" x="250" y="140" class="event e-1"/>
+        <rect height="25" width="25" x="210" y="140" class="event e-2"/>
+        <rect height="25" width="25" x="170" y="140" class="event e-3"/>
+        <rect height="25" width="25" x="130" y="140" class="event e-4"/>
+        <rect height="25" width="25" x="90" y="140" class="event e-5"/>
+        <rect height="25" width="25" x="50" y="140" class="event e-6"/>
+      </g>
+    </svg>
+
+    <div class="controls">
+      <button class="play">Play</button>
+      <button class="pause">Pause</button>
+      <button class="restart">Restart</button>
+      <input class="progress" step=".001" type="range" min="0" max="100" value="0"/>
+    </div>
+
+    <script src="node_modules/jquery/dist/jquery.min.js"></script>
+    <script src="node_modules/animejs/lib/anime.min.js"></script>
+    <script src="script-transforming.js"></script>
+  </body>
+</html>

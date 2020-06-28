@@ -1,0 +1,15 @@
+.persistent-query {
+    stroke: #b5b5b5;
+}
+
+.event {
+    fill: #6b84ff;
+}
+
+.event-transformed {
+    fill: #a96bff;
+}
+
+.event.discard {
+    fill: #ff9c6b;
+}

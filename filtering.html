@@ -1,0 +1,29 @@
+<!doctype html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="styles-global.css">
+
+  </head>
+
+  <body>
+    
+    <svg class="filtering" width="1000" height="300" style="display: block; margin: auto;">
+      <path d="M 450,50 h -50 v 50" fill="none" stroke-width="1" class="persistent-query"/>
+      <path d="M 550,50 h 50 v 50" fill="none" stroke-width="1" class="persistent-query"/>
+      <path d="M 400,200 v 50 h 50" fill="none" stroke-width="1" class="persistent-query"/>
+      <path d="M 600,200 v 50 h -50" fill="none" stroke-width="1" class="persistent-query"/>
+
+      <rect height="25" width="25" x="250" y="140" class="event keep"/>
+      <rect height="25" width="25" x="210" y="140" class="event discard"/>
+      <rect height="25" width="25" x="170" y="140" class="event keep"/>
+      <rect height="25" width="25" x="130" y="140" class="event discard"/>
+      <rect height="25" width="25" x="90" y="140" class="event discard"/>
+      <rect height="25" width="25" x="50" y="140" class="event keep"/>
+    </svg>
+
+    <script src="node_modules/animejs/lib/anime.min.js"></script>
+    <script src="script-filtering.js"></script>
+  </body>
+</html>

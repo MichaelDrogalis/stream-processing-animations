@@ -1,0 +1,25 @@
+.box {
+    pointer-events: none;
+    position: relative;
+    width: 28px;
+    height: 28px;
+    margin: 1px;
+    background-color: currentColor;
+    font-size: 14px;
+    opacity: 0;
+}
+
+.red {
+    color: #FF4B4B;
+}
+
+.blue {
+    color: #4dd5ff;
+}
+
+.blue.i-1 { top: -170px; }
+.blue.i-2 { top: -180px; }
+.blue.i-3 { top: -140px; }
+.blue.i-4 { top: -125px; }
+.blue.i-5 { top: -120px; }
+.blue.i-6 { top: -115px; }
