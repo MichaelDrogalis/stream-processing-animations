@@ -8,7 +8,7 @@ var box_distance = 200;
 var event_width = 25;
 var event_spacing = 40;
 
-function closest_to_box() {
+function min_distance_to_box() {
   result = [];
 
   $(".transforming > .events > .event").each(function() {
@@ -19,7 +19,7 @@ function closest_to_box() {
   return box_start - Math.max.apply(Math, result) - event_width;
 }
 
-function furthest_from_box() {
+function max_distance_to_box() {
   result = [];
 
   $(".transforming > .events > .event").each(function() {
@@ -30,12 +30,13 @@ function furthest_from_box() {
   return box_start - Math.min.apply(Math, result) - event_width;
 }
 
-var closest_d = closest_to_box();
-var furthest_d = furthest_from_box();
+var min_d = min_distance_to_box();
+var max_d = max_distance_to_box();
 
 function build_animation(selector) {
-  start = box_start - (parseFloat($(selector).attr("x")) + event_width);
-  end = (furthest_d - start) + closest_d;
+  idx = $(selector).index();
+  start = min_d + (event_spacing * idx);
+  end = max_d - (event_spacing * idx);
   total_distance = start + end + box_distance;
   
   return {
