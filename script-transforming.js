@@ -50,13 +50,14 @@ function build_animation(selector) {
       {
         duration: ((box_distance / total_distance) * duration),
         translateX: relative_add(box_distance),
-        fill: ["#6b84ff", "#FFE56B"]},
+        fill: ["#6b84ff", "#FFE56B"]
+      },
       {
         duration: ((end / total_distance) * duration),
         translateX: relative_add(end)
       }
     ]
-  }
+  };
 }
 
 var controlsProgressEl = $(".controls > .progress");
