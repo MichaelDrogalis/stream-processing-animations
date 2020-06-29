@@ -9,10 +9,12 @@
 
   <body>    
     <svg class="transforming" width="1000" height="300" style="display: block; margin: auto;">
-      <path d="M 450,50 h -50 v 50" fill="none" stroke-width="1" class="persistent-query"/>
-      <path d="M 550,50 h 50 v 50" fill="none" stroke-width="1" class="persistent-query"/>
-      <path d="M 400,200 v 50 h 50" fill="none" stroke-width="1" class="persistent-query"/>
-      <path d="M 600,200 v 50 h -50" fill="none" stroke-width="1" class="persistent-query"/>
+      <g class="pq">
+        <path d="M 450,50 h -50 v 50" fill="none" stroke-width="1" class="persistent-query"/>
+        <path d="M 550,50 h 50 v 50" fill="none" stroke-width="1" class="persistent-query"/>
+        <path d="M 400,200 v 50 h 50" fill="none" stroke-width="1" class="persistent-query"/>
+        <path d="M 600,200 v 50 h -50" fill="none" stroke-width="1" class="persistent-query"/>
+      </g>
 
       <g class="events">
         <rect height="25" width="25" x="250" y="140" class="event e-1"/>
@@ -22,9 +24,12 @@
         <rect height="25" width="25" x="90" y="140" class="event e-5"/>
         <rect height="25" width="25" x="50" y="140" class="event e-6"/>
       </g>
+
+      <g class="t1 p0">
+      </g>
     </svg>
 
-    <div class="controls">
+    <div class="transforming controls">
       <button class="play">Play</button>
       <button class="pause">Pause</button>
       <button class="restart">Restart</button>

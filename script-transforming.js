@@ -2,7 +2,7 @@ function relative_add(x) {
   return "+=" + x;
 }
 
-var duration = 4000;
+var ms_px = 6.153846153846154;
 var box_start = 400;
 var box_distance = 200;
 var event_width = 25;
@@ -37,30 +37,29 @@ function build_animation(selector) {
   idx = $(selector).index();
   start = min_d + (event_spacing * idx);
   end = max_d - (event_spacing * idx);
-  total_distance = start + end + box_distance;
-  
+
   return {
     targets: selector,
     easing: "linear",
     keyframes: [
       {
-        duration: ((start / total_distance) * duration),
+        duration: start * ms_px,
         translateX: start
       },
       {
-        duration: ((box_distance / total_distance) * duration),
+        duration: box_distance * ms_px,
         translateX: relative_add(box_distance),
         fill: ["#6b84ff", "#FFE56B"]
       },
       {
-        duration: ((end / total_distance) * duration),
+        duration: end * ms_px,
         translateX: relative_add(end)
       }
     ]
   };
 }
 
-var controlsProgressEl = $(".controls > .progress");
+var controlsProgressEl = $(".controls.transforming > .progress");
 
 var timeline = anime.timeline({
   loop: true,
@@ -76,9 +75,9 @@ timeline.add(build_animation(".transforming > .events > .event.e-4"), 3000);
 timeline.add(build_animation(".transforming > .events > .event.e-5"), 4000);
 timeline.add(build_animation(".transforming > .events > .event.e-6"), 5000);
 
-$(".controls > .play").click(timeline.play);
-$(".controls > .pause").click(timeline.pause);
-$(".controls > .restart").click(timeline.restart);
+$(".controls.transforming > .play").click(timeline.play);
+$(".controls.transforming > .pause").click(timeline.pause);
+$(".controls.transforming > .restart").click(timeline.restart);
 
 controlsProgressEl.on('input', function() {
   timeline.seek(timeline.duration * (controlsProgressEl.val() / 100));
