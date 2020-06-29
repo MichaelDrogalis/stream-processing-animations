@@ -33,8 +33,8 @@ function max_distance_to_box() {
 var min_d = min_distance_to_box();
 var max_d = max_distance_to_box();
 
-function build_animation(selector) {
-  idx = $(selector).index();
+function build_animation(selector, id) {
+  idx = $(".transforming > .events > .event").index($(id));
   start = min_d + (event_spacing * idx);
   end = max_d - (event_spacing * idx);
 
@@ -68,12 +68,12 @@ var timeline = anime.timeline({
   }
 });
 
-timeline.add(build_animation(".transforming > .events > .event.e-1"));
-timeline.add(build_animation(".transforming > .events > .event.e-2"), 1000);
-timeline.add(build_animation(".transforming > .events > .event.e-3"), 2000);
-timeline.add(build_animation(".transforming > .events > .event.e-4"), 3000);
-timeline.add(build_animation(".transforming > .events > .event.e-5"), 4000);
-timeline.add(build_animation(".transforming > .events > .event.e-6"), 5000);
+timeline.add(build_animation(".transforming > .events > .event.e-1", ".e-1"));
+timeline.add(build_animation(".transforming > .events > .event.e-2", ".e-2"), 1000);
+timeline.add(build_animation(".transforming > .events > .event.e-3", ".e-3"), 2000);
+timeline.add(build_animation(".transforming > .events > .event.e-4", ".e-4"), 3000);
+timeline.add(build_animation(".transforming > .events > .event.e-5", ".e-5"), 4000);
+timeline.add(build_animation(".transforming > .events > .event.e-6", ".e-6"), 5000);
 
 $(".controls.transforming > .play").click(timeline.play);
 $(".controls.transforming > .pause").click(timeline.pause);

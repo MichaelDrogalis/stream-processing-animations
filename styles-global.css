@@ -13,3 +13,11 @@
 .event.discard {
     fill: #ff9c6b;
 }
+
+.partition {
+    stroke: #000000;
+}
+
+.code {
+    font-family: monospace;
+}
