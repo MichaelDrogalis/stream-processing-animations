@@ -9,15 +9,15 @@
     stroke-dasharray: 4;
 }
 
-.event {
+.row {
     fill: #6b84ff;
 }
 
-.event-transformed {
+.row-transformed {
     fill: #a96bff;
 }
 
-.event.discard {
+.row.discard {
     fill: #ff9c6b;
 }
 
