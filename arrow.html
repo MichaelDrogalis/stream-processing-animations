@@ -8,9 +8,9 @@
   </head>
 
   <body>    
-    <svg class="transforming" width="1000" height="300" style="display: block; margin: auto;">
+    <svg class="filtering" width="1000" height="300" style="display: block; margin: auto;">
       <g class="pq">
-        <text x="350" y="25" class="code">CREATE STREAM s2 AS SELECT a, uppercase(b) FROM s1 EMIT CHANGES;</text>
+        <text x="350" y="25" class="code">CREATE STREAM s2 AS SELECT a, b FROM s1 WHERE b = 42 EMIT CHANGES;</text>
         <path d="M 450,50 h -50 v 50" fill="none" stroke-width="1" class="persistent-query"/>
         <path d="M 550,50 h 50 v 50" fill="none" stroke-width="1" class="persistent-query"/>
         <path d="M 400,200 v 50 h 50" fill="none" stroke-width="1" class="persistent-query"/>
@@ -18,23 +18,26 @@
       </g>
 
       <g class="events">
-        <text x="25" y="100" class="code">p0</text>
+        <text x="0" y="125" class="code">0</text>
+
+        <text x="270" y="110" class="code marker">s2</text>
+        <text x="270" y="130" class="code marker" style="font-size: 20px;">↓</text>
         
         <path d="M 40, 115 h -15 v 15" fill="none" stroke-width="1" class="partition"/>
         <path d="M 285, 115 h 15 v 15" fill="none" stroke-width="1" class="partition"/>
         <path d="M 25, 175 v 15 h 15" fill="none" stroke-width="1" class="partition"/>
         <path d="M 300, 175 v 15 h -15" fill="none" stroke-width="1" class="partition"/>
         
-        <rect height="25" width="25" x="250" y="140" class="event e-1"/>
-        <rect height="25" width="25" x="210" y="140" class="event e-2"/>
-        <rect height="25" width="25" x="170" y="140" class="event e-3"/>
-        <rect height="25" width="25" x="130" y="140" class="event e-4"/>
-        <rect height="25" width="25" x="90" y="140" class="event e-5"/>
-        <rect height="25" width="25" x="50" y="140" class="event e-6"/>
+        <rect height="25" width="25" x="250" y="140" class="event keep e-1"/>
+        <rect height="25" width="25" x="210" y="140" class="event discard e-2"/>
+        <rect height="25" width="25" x="170" y="140" class="event keep e-3"/>
+        <rect height="25" width="25" x="130" y="140" class="event discard e-4"/>
+        <rect height="25" width="25" x="90" y="140" class="event discard e-5"/>
+        <rect height="25" width="25" x="50" y="140" class="event keep e-6"/>
       </g>
 
       <g class="output">
-        <text x="685" y="100" class="code">p0</text>
+        <text x="660" y="125" class="code">0</text>
         <path d="M 700, 115 h -15 v 15" fill="none" stroke-width="1" class="partition"/>
         <path d="M 925, 115 h 15 v 15" fill="none" stroke-width="1" class="partition"/>
         <path d="M 685, 175 v 15 h 15" fill="none" stroke-width="1" class="partition"/>
@@ -42,7 +45,7 @@
       </g>
     </svg>
 
-    <div class="transforming controls">
+    <div class="filtering controls">
       <button class="play">Play</button>
       <button class="pause">Pause</button>
       <button class="restart">Restart</button>
@@ -51,6 +54,6 @@
 
     <script src="node_modules/jquery/dist/jquery.min.js"></script>
     <script src="node_modules/animejs/lib/anime.min.js"></script>
-    <script src="script-transforming.js"></script>
+    <script src="arrow.js"></script>
   </body>
 </html>

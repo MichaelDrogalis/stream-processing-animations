@@ -1,0 +1,26 @@
+<!doctype html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="styles-global.css">
+
+  </head>
+
+  <body>
+    <div class="animation-container">
+      <div class="controls">
+        <button class="play">Play</button>
+        <button class="pause">Pause</button>
+        <button class="restart">Restart</button>
+        <input class="progress" step=".001" type="range" min="0" max="100" value="0"/>
+      </div>
+
+      <pre style="text-align: center;">CREATE STREAM s2 AS SELECT a, b FROM s1 WHERE b = 42 EMIT CHANGES;</pre>
+    </div>
+
+    <script src="node_modules/jquery/dist/jquery.min.js"></script>
+    <script src="node_modules/animejs/lib/anime.min.js"></script>
+    <script src="dynamic.js"></script>
+  </body>
+</html>

@@ -34,11 +34,11 @@ var min_d = min_distance_to_box();
 var max_d = max_distance_to_box();
 
 function build_keep_animation(selector, id) {
-  start_idx = $(".filtering > .events > .event" + id).index();
+  start_idx = $(".filtering > .events > .event").index($(id));
   end_idx = $(".filtering > .events > .event").filter(".keep").index($(id));
   start = min_d + (event_spacing * start_idx);
   end = max_d - (event_spacing * end_idx);
-  
+
   return {
     targets: selector,
     easing: "linear",
@@ -59,8 +59,8 @@ function build_keep_animation(selector, id) {
   };
 }
 
-function build_discard_animation(selector) {
-  idx = $(selector).index();
+function build_discard_animation(selector, id) {
+  idx = $(".filtering > .events > .event").index($(id));
   start = min_d + (event_spacing * idx);
   box_dist = (box_distance / 2) + (event_width / 2);
   end = 100;
@@ -90,7 +90,7 @@ function build_animation(selector, id) {
   if ($(selector).hasClass("keep")) {
     return build_keep_animation(selector, id);
   } else {
-    return build_discard_animation(selector);
+    return build_discard_animation(selector, id);
   }
 }
 

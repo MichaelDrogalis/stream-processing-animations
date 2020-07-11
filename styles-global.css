@@ -1,5 +1,12 @@
-.persistent-query {
+.pq {
     stroke: #b5b5b5;
+    stroke-width: 1;
+    fill: none;
+}
+
+.pq-connector {
+    stroke: #b5b5b5;
+    stroke-dasharray: 4;
 }
 
 .event {
@@ -16,6 +23,8 @@
 
 .partition {
     stroke: #000000;
+    stroke-width: 1;
+    fill: none;
 }
 
 .code {
