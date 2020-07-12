@@ -46,15 +46,16 @@ function render_rows(rows, styles, computed) {
 }
 
 function render_partition(rows, styles, computed) {
-  ({ part_id_margin_top, part_id_margin_left } = styles);
+  ({ svg_width } = styles);
+  ({ part_bracket_len, part_width, part_height, part_id_margin_top, part_id_margin_left } = styles);
   ({ part, top_y } = computed);
 
-  const midpoint_x = ((styles.svg_width / 3) / 2);
-  const b_len = styles.part_bracket_len;
+  const midpoint_x = ((svg_width / 3) / 2);
+  const b_len = part_bracket_len;
 
-  const left_x = midpoint_x - (styles.part_width / 2);
-  const right_x = midpoint_x + (styles.part_width / 2);
-  const bottom_y = top_y + styles.part_height;
+  const left_x = midpoint_x - (part_width / 2);
+  const right_x = midpoint_x + (part_width / 2);
+  const bottom_y = top_y + part_height;
 
   const part_html = `
         <text x="${left_x + part_id_margin_left}" y="${top_y + part_id_margin_top}" class="code">${part}</text>`;
@@ -65,31 +66,72 @@ function render_partition(rows, styles, computed) {
         <path d="M ${left_x},${bottom_y - b_len} v ${b_len} h ${b_len}" class="partition"></path>
         <path d="M ${right_x},${bottom_y - b_len} v ${b_len} h ${-b_len}" class="partition"></path>`;
 
-  const rows_html = render_rows(rows, styles, {right_x: right_x, top_y: top_y});
+  const rows_html = render_rows(rows, styles, { right_x: right_x, top_y: top_y });
 
   const html = `<g class="partition-container">${part_html}${bracket_html}${rows_html}</g>`;
   $(".system").append(html);
 }
 
-function render_partitions(inputs, styles) {
-  let top_y = 0;
-  ({ part_height, part_margin_bottom } = styles);
+function render_coll_label(coll, styles, computed) {
+  ({ svg_width } = styles);
+  ({ coll_tip_len, coll_foot_len, coll_tip_margin_top } = styles);
+  ({ part_width, part_height } = styles);
+  ({ top_y } = computed);
+
+  const midpoint_x = ((svg_width / 3) / 2);
+  const left_x = midpoint_x - (part_width / 2);
+  const right_x = midpoint_x + (part_width / 2);
+
+  const coll_tip_top_y = top_y + coll_tip_margin_top;
+  const coll_tip_bottom_y = coll_tip_top_y + coll_tip_len;
+  const coll_foot_bottom_y = coll_tip_bottom_y + coll_foot_len;
+
+  const label_html = `<text x="${midpoint_x}" y="${top_y}" text-anchor="middle" class="code">${coll}</text>`;
+  const tip_html = `<line x1="${midpoint_x}" y1="${coll_tip_top_y}" x2="${midpoint_x}" y2="${coll_tip_bottom_y}" class="coll-connector"></line>`;
+  const bar_html = `<line x1="${left_x}" y1="${coll_tip_bottom_y}" x2="${right_x}" y2="${coll_tip_bottom_y}" class="coll-connector"></line>`;
+  const left_foot_html = `<line x1="${left_x}" y1="${coll_tip_bottom_y}" x2="${left_x}" y2="${coll_foot_bottom_y}" class="coll-connector"></line>`;
+  const right_foot_html = `<line x1="${right_x}" y1="${coll_tip_bottom_y}" x2="${right_x}" y2="${coll_foot_bottom_y}" class="coll-connector"></line>`;
   
-  for (const [partition, rows] of Object.entries(inputs.s1)) {
-    render_partition(rows, styles, {part: partition, top_y: top_y});
-    top_y += (part_height + part_margin_bottom);
+  const html = `<g class="coll-label">${label_html}${tip_html}${bar_html}${left_foot_html}${right_foot_html}</g>`;
+  
+  $(".system").append(html);
+
+  return { bottom_y: coll_foot_bottom_y };
+}
+
+function render_colls(inputs, styles) {
+  let top_y = 10;
+  ({ coll_margin_bottom, coll_label_margin_bottom } = styles);
+  ({ part_height, part_margin_bottom } = styles);
+
+  for (const [coll, partitions] of Object.entries(inputs)) {
+    ({ bottom_y } = render_coll_label(coll, styles, { top_y: top_y }));
+    top_y = bottom_y + coll_label_margin_bottom;
+
+    for (const [partition, rows] of Object.entries(partitions)) {
+      render_partition(rows, styles, { part: partition, top_y: top_y });
+      top_y += (part_height + part_margin_bottom);
+    }
+
+    top_y += coll_margin_bottom;
   }
 }
 
 const context = {
   styles: {
     svg_width: 1200,
-    svg_height: 450,
+    svg_height: 500,
 
     pq_width: 150,
     pq_height: 150,
     pq_margin_top: 50,
     pq_bracket_len: 25,
+
+    coll_margin_bottom: 15,
+    coll_tip_len: 10,
+    coll_foot_len: 10,
+    coll_tip_margin_top: 5,
+    coll_label_margin_bottom: 15,
 
     part_width: 200,
     part_height: 50,
@@ -123,6 +165,16 @@ const context = {
         { value: 42, t: 1 },
         { value: 40, t: 2 }
       ]
+    },
+    s3: {
+      0: [
+        { value: 42, t: 1 },
+        { value: 40, t: 2 },
+        { value: 42, t: 6 }
+      ],
+      1: [
+        { value: 42, t: 1 }
+      ]
     }
   },
   outputs: {
@@ -135,7 +187,7 @@ const context = {
 $(document).ready(function() {
   render_svg(context.styles);
   render_persistent_query(context.styles);
-  render_partitions(context.inputs, context.styles);
+  render_colls(context.inputs, context.styles);
 
   // Repaint.
   $(".system").html($(".system").html());
