@@ -1,3 +1,8 @@
+.system {
+    display: block;
+    margin: auto;
+}
+
 .pq {
     stroke: #b5b5b5;
     stroke-width: 1;
