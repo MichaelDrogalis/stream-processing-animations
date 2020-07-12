@@ -5,8 +5,8 @@ function render_svg(styles) {
   $(".animation-container").append(html);
 }
 
-function render_persistent_query(styles) {
-  const midpoint_x = (styles.svg_width / 2);
+function render_persistent_query(styles, computed) {
+  ({ midpoint_x } = computed);
   const b_len = styles.pq_bracket_len;
 
   const left_x = midpoint_x - (styles.pq_width / 2);
@@ -48,9 +48,8 @@ function render_rows(rows, styles, computed) {
 function render_partition(rows, styles, computed) {
   ({ svg_width } = styles);
   ({ part_bracket_len, part_width, part_height, part_id_margin_top, part_id_margin_left } = styles);
-  ({ part, top_y } = computed);
+  ({ part, top_y, midpoint_x } = computed);
 
-  const midpoint_x = ((svg_width / 3) / 2);
   const b_len = part_bracket_len;
 
   const left_x = midpoint_x - (part_width / 2);
@@ -76,9 +75,8 @@ function render_coll_label(coll, styles, computed) {
   ({ svg_width } = styles);
   ({ coll_tip_len, coll_foot_len, coll_tip_margin_top } = styles);
   ({ part_width, part_height } = styles);
-  ({ top_y } = computed);
+  ({ top_y, midpoint_x } = computed);
 
-  const midpoint_x = ((svg_width / 3) / 2);
   const left_x = midpoint_x - (part_width / 2);
   const right_x = midpoint_x + (part_width / 2);
 
@@ -99,17 +97,19 @@ function render_coll_label(coll, styles, computed) {
   return { bottom_y: coll_foot_bottom_y };
 }
 
-function render_colls(inputs, styles) {
-  let top_y = 10;
+function render_colls(inputs, styles, computed) {
   ({ coll_margin_bottom, coll_label_margin_bottom } = styles);
   ({ part_height, part_margin_bottom } = styles);
+  ({ midpoint_x } = computed);
+
+  let top_y = 10;
 
   for (const [coll, partitions] of Object.entries(inputs)) {
-    ({ bottom_y } = render_coll_label(coll, styles, { top_y: top_y }));
+    ({ bottom_y } = render_coll_label(coll, styles, { top_y: top_y, midpoint_x: midpoint_x }));
     top_y = bottom_y + coll_label_margin_bottom;
 
     for (const [partition, rows] of Object.entries(partitions)) {
-      render_partition(rows, styles, { part: partition, top_y: top_y });
+      render_partition(rows, styles, { part: partition, top_y: top_y, midpoint_x: midpoint_x });
       top_y += (part_height + part_margin_bottom);
     }
 
@@ -185,9 +185,13 @@ const context = {
 };
 
 $(document).ready(function() {
-  render_svg(context.styles);
-  render_persistent_query(context.styles);
-  render_colls(context.inputs, context.styles);
+  ({ inputs, outputs, styles } = context);
+  ({ svg_width } = styles);
+
+  render_svg(styles);
+  render_persistent_query(styles, { midpoint_x: (svg_width / 2) });
+  render_colls(inputs, styles, { midpoint_x: ((svg_width / 3) / 2) });
+  render_colls(outputs, styles, { midpoint_x: ((svg_width * (2 / 3)) + ((svg_width / 3) / 2)) });
 
   // Repaint.
   $(".system").html($(".system").html());
