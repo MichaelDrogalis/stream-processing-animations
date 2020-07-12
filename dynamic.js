@@ -101,6 +101,7 @@ function build_partition_data(rows, styles, computed) {
 
   return {
     container: container,
+    part: part,
     id: {
       x: left_x + part_id_margin_left,
       y: top_y + part_id_margin_top
@@ -257,7 +258,7 @@ function render_rows(data) {
 }
 
 function render_partition(data) {
-  ({ container, id, brackets, rows } = data);
+  ({ container, id, brackets, part, rows } = data);
   ({ tl, tr, bl, br } = brackets);
 
   const rows_html = render_rows(rows, styles, { right_x: right_x, top_y: top_y });
@@ -392,6 +393,8 @@ $(document).ready(function() {
 
   const outputs_data = build_colls_data(outputs, styles, { midpoint_x: ((svg_width * (2 / 3)) + ((svg_width / 3) / 2)) });
   render_colls(outputs_data);
+
+//  console.log(inputs_data);
 
   // Repaint.
   $(".system").html($(".system").html());
