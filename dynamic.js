@@ -179,8 +179,10 @@ const context = {
   },
   outputs: {
     s2: {
-      0: []
-    }
+      0: [],
+      1: [],
+      2: []
+    },
   }
 };
 
@@ -189,8 +191,8 @@ $(document).ready(function() {
   ({ svg_width } = styles);
 
   render_svg(styles);
-  render_persistent_query(styles, { midpoint_x: (svg_width / 2) });
   render_colls(inputs, styles, { midpoint_x: ((svg_width / 3) / 2) });
+  render_persistent_query(styles, { midpoint_x: (svg_width / 2) });
   render_colls(outputs, styles, { midpoint_x: ((svg_width * (2 / 3)) + ((svg_width / 3) / 2)) });
 
   // Repaint.
