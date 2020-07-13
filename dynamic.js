@@ -353,6 +353,96 @@ function render(data) {
   }
 }
 
+function collections_translate_y(data, height) {
+  data.collections = data.collections.map(collection => {
+    collection.label.label.y += height;
+
+    collection.label.tip.y1 += height;
+    collection.label.tip.y2 += height;
+
+    collection.label.bar.y1 += height;
+    collection.label.bar.y2 += height;
+
+    collection.label.left_foot.y1 += height;
+    collection.label.left_foot.y2 += height;
+
+    collection.label.right_foot.y1 += height;
+    collection.label.right_foot.y2 += height;
+
+    collection.partitions = collection.partitions.map(partition => {
+      partition.id.y += height;
+
+      partition.brackets.tl.y += height;
+      partition.brackets.tr.y += height;
+      partition.brackets.bl.y += height;
+      partition.brackets.br.y += height;
+
+      partition.rows = partition.rows.map(row => {
+        row.y += height;
+
+        return row;
+      });
+
+      return partition;
+    });
+    
+    return collection;
+  });
+  
+  return data;
+}
+
+function persistent_query_translate_y(data, height) {
+  data.line.y2 += height;
+
+  data.brackets.tl.y += height;
+  data.brackets.tr.y += height;
+  data.brackets.bl.y += height;
+  data.brackets.br.y += height;
+  
+  return data;
+}
+
+function translate_y(data, height) {
+  switch(data.kind) {
+  case "collections":
+    return collections_translate_y(data, height);
+  case "persistent_query":
+    return persistent_query_translate_y(data, height);
+  }
+}
+
+function vertically_center_layout(layout_data) {
+  const heights = layout_data.map(data => rendered_height(data));
+  const max_height = Math.max(...heights);
+
+  layout_data.map((data, i) => {
+    const diff = (max_height - heights[i]) / 2;
+    return translate_y(data, diff);
+  });
+
+  return layout_data;
+}
+
+function build_layout_data(configs, styles) {
+  ({ svg_width } = styles);
+
+  const n = configs.length;
+  const column_width = (svg_width / n);
+
+  return configs.map((config, i) => {
+    const midpoint_x = (i * column_width) + (column_width / 2);
+    const computed = { midpoint_x: midpoint_x };
+    
+    switch(config.kind) {
+    case "collections":
+      return build_colls_data(config, styles, computed);
+    case "persistent_query":
+      return build_persistent_query_data(config, styles, computed);
+    }
+  });
+}
+
 const styles = {
   svg_width: 1200,
   svg_height: 500,
@@ -433,25 +523,6 @@ const outputs = {
   }
 };
 
-function build_layout_data(configs, styles) {
-  ({ svg_width } = styles);
-
-  const n = configs.length;
-  const column_width = (svg_width / n);
-
-  return configs.map((config, i) => {
-    const midpoint_x = (i * column_width) + (column_width / 2);
-    const computed = { midpoint_x: midpoint_x };
-    
-    switch(config.kind) {
-    case "collections":
-      return build_colls_data(config, styles, computed);
-    case "persistent_query":
-      return build_persistent_query_data(config, styles, computed);
-    }
-  });
-}
-
 $(document).ready(function() {
   ({ svg_width } = styles);
 
@@ -464,8 +535,8 @@ $(document).ready(function() {
     outputs
   ], styles);
 
-  layout_data.forEach(data => render(data));
-//  console.log(layout.map(data => rendered_height(data)));
+  const v_layout_data = vertically_center_layout(layout_data);
+  v_layout_data.forEach(data => render(data));
 
   // Repaint.
   $(".system").html($(".system").html());
