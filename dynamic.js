@@ -2,12 +2,13 @@ function build_svg_data(styles) {
   ({ svg_width, svg_height } = styles);
 
   return {
+    kind: "svg",
     width: svg_width,
     height: svg_height
   };
 }
 
-function build_persistent_query_data(styles, computed) {
+function build_persistent_query_data(config, styles, computed) {
   ({ pq_width, pq_height, pq_margin_top, pq_bracket_len } = styles);
   ({ midpoint_x } = computed);
 
@@ -19,6 +20,7 @@ function build_persistent_query_data(styles, computed) {
   const b_len = pq_bracket_len;
 
   return {
+    kind: "persistent_query",
     line: {
       x1: midpoint_x,
       y1: 0,
@@ -186,15 +188,16 @@ function build_coll_label_data(coll, styles, computed) {
   };
 }
 
-function build_colls_data(colls, styles, computed) {
-  ({ coll_margin_bottom, coll_label_margin_bottom } = styles);
+function build_colls_data(config, styles, computed) {
+  ({ collections } = config);
+  ({ coll_padding_top, coll_margin_bottom, coll_label_margin_bottom } = styles);
   ({ part_height, part_margin_bottom } = styles);
   ({ midpoint_x } = computed);
 
-  let top_y = 10;
+  let top_y = coll_padding_top;
   let result = [];
 
-  for (const [coll, partitions] of Object.entries(colls)) {
+  for (const [coll, partitions] of Object.entries(collections)) {
     const container = `coll-${coll}`;
     const coll_result = { container: container };
     const partitions_result = []
@@ -220,7 +223,7 @@ function build_colls_data(colls, styles, computed) {
     top_y += coll_margin_bottom;
   }
 
-  return result;
+  return { kind: "collections", collections: result };
 }
 
 function render_svg(data) {
@@ -299,7 +302,9 @@ function render_coll_container(data) {
 }
 
 function render_colls(data) {
-  for (const coll of data) {
+  ({ collections } = data);
+  
+  for (const coll of collections) {
     render_coll_container(coll.container);
     render_coll_label(coll.label);
 
@@ -309,35 +314,77 @@ function render_colls(data) {
   }
 }
 
-const context = {
-  styles: {
-    svg_width: 1200,
-    svg_height: 500,
+function colls_rendered_height(data) {
+  const bl = data.slice(-1)[0].partitions.slice(-1)[0].brackets.bl;
+  const bottom = (bl.y + bl.v);
+  const top = data[0].label.label.y;
 
-    pq_width: 150,
-    pq_height: 150,
-    pq_margin_top: 50,
-    pq_bracket_len: 25,
+  return bottom - top;
+}
 
-    coll_margin_bottom: 15,
-    coll_tip_len: 10,
-    coll_foot_len: 10,
-    coll_tip_margin_top: 5,
-    coll_label_margin_bottom: 15,
+function persistent_query_rendered_height(data) {
+  const bl = data.brackets.bl;
+  const bottom = (bl.y + bl.v);
+  const top = data.line.y1;
 
-    part_width: 200,
-    part_height: 50,
-    part_margin_bottom: 25,
-    part_bracket_len: 10,
-    part_id_margin_left: -15,
-    part_id_margin_top: 8,
+  return bottom - top;
+}
 
-    row_width: 15,
-    row_height: 15,
-    row_margin_left: 10,
-    row_offset_right: 15
-  },
-  inputs: {
+function rendered_height(data) {
+  switch(data.kind) {
+  case "collections":
+    return colls_rendered_height(data.collections)
+  case "persistent_query":
+    return persistent_query_rendered_height(data);
+  }
+}
+
+function render(data) {
+  switch(data.kind) {
+  case "svg":
+    render_svg(data);
+    break;
+  case "collections":
+    render_colls(data);
+    break;
+  case "persistent_query":
+    render_persistent_query(data);
+    break;
+  }
+}
+
+const styles = {
+  svg_width: 1200,
+  svg_height: 500,
+
+  pq_width: 150,
+  pq_height: 150,
+  pq_margin_top: 50,
+  pq_bracket_len: 25,
+
+  coll_padding_top: 10,
+  coll_margin_bottom: 15,
+  coll_tip_len: 10,
+  coll_foot_len: 10,
+  coll_tip_margin_top: 5,
+  coll_label_margin_bottom: 15,
+
+  part_width: 200,
+  part_height: 50,
+  part_margin_bottom: 25,
+  part_bracket_len: 10,
+  part_id_margin_left: -15,
+  part_id_margin_top: 8,
+
+  row_width: 15,
+  row_height: 15,
+  row_margin_left: 10,
+  row_offset_right: 15
+};
+
+const inputs = {
+  kind: "collections",
+  collections: {
     s1: {
       0: [
         { value: 42, t: 1 },
@@ -368,33 +415,57 @@ const context = {
         { value: 42, t: 1 }
       ]
     }
-  },
-  outputs: {
+  }
+};
+
+const persistent_query = {
+  kind: "persistent_query"
+}
+
+const outputs = {
+  kind: "collections",
+  collections: {
     s2: {
       0: [],
       1: [],
       2: []
-    },
+    }
   }
 };
 
+function build_layout_data(configs, styles) {
+  ({ svg_width } = styles);
+
+  const n = configs.length;
+  const column_width = (svg_width / n);
+
+  return configs.map((config, i) => {
+    const midpoint_x = (i * column_width) + (column_width / 2);
+    const computed = { midpoint_x: midpoint_x };
+    
+    switch(config.kind) {
+    case "collections":
+      return build_colls_data(config, styles, computed);
+    case "persistent_query":
+      return build_persistent_query_data(config, styles, computed);
+    }
+  });
+}
+
 $(document).ready(function() {
-  ({ inputs, outputs, styles } = context);
   ({ svg_width } = styles);
 
   const svg_data = build_svg_data(styles);
-  render_svg(svg_data);
+  render(svg_data);
 
-  const inputs_data = build_colls_data(inputs, styles, { midpoint_x: ((svg_width / 3) / 2) });
-  render_colls(inputs_data);
+  const layout_data = build_layout_data([
+    inputs,
+    persistent_query,
+    outputs
+  ], styles);
 
-  const pq_data = build_persistent_query_data(styles, { midpoint_x: (svg_width / 2) });
-  render_persistent_query(pq_data);
-
-  const outputs_data = build_colls_data(outputs, styles, { midpoint_x: ((svg_width * (2 / 3)) + ((svg_width / 3) / 2)) });
-  render_colls(outputs_data);
-
-//  console.log(inputs_data);
+  layout_data.forEach(data => render(data));
+//  console.log(layout.map(data => rendered_height(data)));
 
   // Repaint.
   $(".system").html($(".system").html());
