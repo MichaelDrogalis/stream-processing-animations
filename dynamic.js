@@ -91,7 +91,9 @@ function build_rows_data (rows, styles, computed) {
 function build_partition_data(rows, styles, computed) {
   ({ svg_width } = styles);
   ({ part_bracket_len, part_width, part_height, part_id_margin_top, part_id_margin_left } = styles);
-  ({ part, top_y, midpoint_x, container } = computed);
+  ({ consumer_m_init_margin_left, consumer_m_margin_bottom,
+     consumer_m_text_margin_bottom, consumer_m_offset_bottom } = styles);
+  ({ part, consumers, top_y, midpoint_x, container } = computed);
 
   const b_len = part_bracket_len;
 
@@ -104,6 +106,13 @@ function build_partition_data(rows, styles, computed) {
   return {
     container: container,
     part: part,
+    consumers: {
+      names: consumers,
+      init_margin_left: consumer_m_init_margin_left,
+      arrow_margin_bottom: consumer_m_margin_bottom,
+      text_margin_bottom: consumer_m_text_margin_bottom,
+      offset_bottom: consumer_m_offset_bottom
+    },
     id: {
       x: left_x + part_id_margin_left,
       y: top_y + part_id_margin_top
@@ -197,7 +206,9 @@ function build_colls_data(config, styles, computed) {
   let top_y = coll_padding_top;
   let result = [];
 
-  for (const [coll, partitions] of Object.entries(collections)) {
+  for (const [coll, coll_data] of Object.entries(collections)) {
+    ({ partitions, consumers } = coll_data);
+
     const container = `coll-${coll}`;
     const coll_result = { container: container };
     const partitions_result = []
@@ -209,7 +220,14 @@ function build_colls_data(config, styles, computed) {
     top_y = bottom_y + coll_label_margin_bottom;
 
     for (const [partition, rows] of Object.entries(partitions)) {
-      const part_computed = { part: partition, top_y: top_y, midpoint_x: midpoint_x, container: container };
+      const part_computed = {
+        part: partition,
+        consumers: consumers,
+        top_y: top_y,
+        midpoint_x: midpoint_x,
+        container: container
+      };
+
       const part_data = build_partition_data(rows, styles, part_computed);
 
       partitions_result.push(part_data);
@@ -260,11 +278,36 @@ function render_rows(data) {
   return row_html;
 }
 
+function render_consumer_marker(data) {
+  ({ consumers } = data);
+  ({ init_margin_left, arrow_margin_bottom, text_margin_bottom, offset_bottom } = consumers );
+
+  let consumer_markers_html = "";
+
+  if (consumers.names != undefined) {
+    for (i = 0; i < consumers.names.length; i++) {
+      const row = data.rows[0];
+
+      const offset = (i * offset_bottom);
+      const x = (row.x + row.width) + init_margin_left;
+      const y = (row.y - arrow_margin_bottom) - offset;
+      const text_y = (y - text_margin_bottom);
+      const name = consumers.names[i];
+
+      consumer_markers_html += `<text x="${x}" y="${text_y}" text-anchor="middle" class="code">${name}</text>`;
+      consumer_markers_html += `<text x="${x}" y="${y}" class="code">↓</text>`;
+    }
+  }
+
+  return consumer_markers_html;
+}
+
 function render_partition(data) {
   ({ container, id, brackets, part, rows } = data);
   ({ tl, tr, bl, br } = brackets);
 
   const rows_html = render_rows(rows, styles, { right_x: right_x, top_y: top_y });
+  const consumer_markers_html = render_consumer_marker(data);
 
   const html = `
 <g class="partition-container">
@@ -275,6 +318,7 @@ function render_partition(data) {
     <path d="M ${bl.x},${bl.y} v ${bl.v} h ${bl.h}" class="partition"></path>        
     <path d="M ${br.x},${br.y} v ${br.v} h ${br.h}" class="partition"></path>
 
+    ${consumer_markers_html}
     ${rows_html}
 </g>
 `;
@@ -453,15 +497,15 @@ const styles = {
   pq_bracket_len: 25,
 
   coll_padding_top: 10,
-  coll_margin_bottom: 15,
+  coll_margin_bottom: 35,
   coll_tip_len: 10,
   coll_foot_len: 10,
   coll_tip_margin_top: 5,
-  coll_label_margin_bottom: 15,
+  coll_label_margin_bottom: 55,
 
   part_width: 200,
   part_height: 50,
-  part_margin_bottom: 25,
+  part_margin_bottom: 50,
   part_bracket_len: 10,
   part_id_margin_left: -15,
   part_id_margin_top: 8,
@@ -469,42 +513,54 @@ const styles = {
   row_width: 15,
   row_height: 15,
   row_margin_left: 10,
-  row_offset_right: 15
+  row_offset_right: 25,
+
+  consumer_m_init_margin_left: -1,
+  consumer_m_margin_bottom: 3,
+  consumer_m_text_margin_bottom: 15,
+  consumer_m_offset_bottom: 30
 };
 
 const inputs = {
   kind: "collections",
   collections: {
     s1: {
-      0: [
-        { value: 42, t: 1 },
-        { value: 40, t: 2 },
-        { value: 42, t: 3 },
-        { value: 39, t: 4 },
-        { value: 51, t: 5 },
-        { value: 42, t: 6 }
-      ],
-      1: [
-        { value: 42, t: 1 },
-        { value: 40, t: 2 },
-        { value: 42, t: 3 },
-        { value: 39, t: 4 }
-      ],
-      2: [
-        { value: 42, t: 1 },
-        { value: 40, t: 2 }
-      ]
-    },
-    s3: {
-      0: [
-        { value: 42, t: 1 },
-        { value: 40, t: 2 },
-        { value: 42, t: 6 }
-      ],
-      1: [
-        { value: 42, t: 1 }
-      ]
+      consumers: ["pq1", "pq2"],
+      partitions: {
+        0: [
+          { value: 42, t: 1 },
+          { value: 40, t: 2 },
+          { value: 42, t: 3 },
+          { value: 39, t: 4 },
+          { value: 51, t: 5 },
+          { value: 42, t: 6 }
+        ],
+        1: [
+          { value: 42, t: 1 },
+          { value: 40, t: 2 },
+          { value: 42, t: 3 },
+          { value: 39, t: 4 }
+        ],
+        2: [
+          { value: 42, t: 1 },
+          { value: 40, t: 2 }
+        ]
+      }
     }
+    ,
+    // s3: {
+    //   consumers: ["pq1"],
+    //   partitions: {
+    //     0: [
+    //       { value: 42, t: 1 },
+    //       { value: 40, t: 2 },
+    //       { value: 42, t: 6 }
+    //     ],
+    //     1: [
+    //       { value: 42, t: 1 }
+    //     ]
+    //   }
+    // }
   }
 };
 
@@ -516,9 +572,11 @@ const outputs = {
   kind: "collections",
   collections: {
     s2: {
-      0: [],
-      1: [],
-      2: []
+      partitions: {
+        0: [],
+        1: [],
+        2: []
+      }
     }
   }
 };
