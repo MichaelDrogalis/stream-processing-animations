@@ -88,7 +88,7 @@ function build_rows_data (rows, styles, computed) {
   return result;
 }
 
-function build_partition_data(rows, styles, computed) {
+function build_partition_data(coll, rows, styles, computed) {
   ({ svg_width } = styles);
   ({ part_bracket_len, part_width, part_height, part_id_margin_top, part_id_margin_left } = styles);
   ({ consumer_m_init_margin_left, consumer_m_margin_bottom,
@@ -107,6 +107,7 @@ function build_partition_data(rows, styles, computed) {
     container: container,
     part: part,
     consumers: {
+      coll: coll,
       names: consumers,
       init_margin_left: consumer_m_init_margin_left,
       arrow_margin_bottom: consumer_m_margin_bottom,
@@ -228,9 +229,9 @@ function build_colls_data(config, styles, computed) {
         container: container
       };
 
-      const part_data = build_partition_data(rows, styles, part_computed);
-
+      const part_data = build_partition_data(coll, rows, styles, part_computed);
       partitions_result.push(part_data);
+
       top_y += (part_height + part_margin_bottom);
     }
 
@@ -279,7 +280,7 @@ function render_rows(data) {
 }
 
 function render_consumer_marker(data) {
-  ({ consumers } = data);
+  ({ part, consumers } = data);
   ({ init_margin_left, arrow_margin_bottom, text_margin_bottom, offset_bottom } = consumers );
 
   let consumer_markers_html = "";
@@ -294,8 +295,12 @@ function render_consumer_marker(data) {
       const text_y = (y - text_margin_bottom);
       const name = consumers.names[i];
 
-      consumer_markers_html += `<text x="${x}" y="${text_y}" text-anchor="middle" class="code">${name}</text>`;
-      consumer_markers_html += `<text x="${x}" y="${y}" class="code">↓</text>`;
+      consumer_markers_html += `
+<g class="collection-${consumers.coll} partition-${part} consumer-${name}">
+    <text x="${x}" y="${text_y}" text-anchor="middle" class="code">${name}</text>
+    <text x="${x}" y="${y}" class="code">↓</text>
+</g>
+`;
     }
   }
 
