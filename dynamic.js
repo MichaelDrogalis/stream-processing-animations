@@ -1,5 +1,5 @@
 function build_svg_data(styles) {
-  ({ svg_width, svg_height } = styles);
+  const { svg_width, svg_height } = styles;
 
   return {
     kind: "svg",
@@ -9,8 +9,8 @@ function build_svg_data(styles) {
 }
 
 function build_persistent_query_data(config, styles, computed) {
-  ({ pq_width, pq_height, pq_margin_top, pq_bracket_len } = styles);
-  ({ midpoint_x } = computed);
+  const { pq_width, pq_height, pq_margin_top, pq_bracket_len } = styles;
+  const { midpoint_x } = computed;
 
   const left_x = midpoint_x - (pq_width / 2);
   const right_x = midpoint_x + (pq_width / 2);
@@ -57,9 +57,9 @@ function build_persistent_query_data(config, styles, computed) {
 }
 
 function build_row_data(row, styles, computed) {
-  ({ row_width, row_height } = styles);
-  ({ part_height } = styles);
-  ({ right_x, top_y, row_x } = computed);
+  const { row_width, row_height } = styles;
+  const { part_height } = styles;
+  const { right_x, top_y, row_x } = computed;
 
   const row_y = top_y + (part_height / 2) - (row_height / 2);
 
@@ -72,28 +72,28 @@ function build_row_data(row, styles, computed) {
 }
 
 function build_rows_data (rows, styles, computed) {
-  ({ row_width, row_margin_left, row_offset_right } = styles);
-  ({ right_x, top_y } = computed);
+  const { row_width, row_margin_left, row_offset_right } = styles;
+  const { right_x, top_y } = computed;
   
   const row_x = right_x - row_offset_right - row_width;
   
-  ({ result } = rows.reduce((all, row) => {
+  const { result } = rows.reduce((all, row) => {
     const row_computed = { right_x: right_x, top_y: top_y, row_x: all.row_x };
     all.result.push(build_row_data(row, styles, row_computed));
     all.row_x -= (row_width + row_margin_left);
 
     return all;
-  }, { result: [], row_x: row_x }));
+  }, { result: [], row_x: row_x });
 
   return result;
 }
 
 function build_partition_data(coll, rows, styles, computed) {
-  ({ svg_width } = styles);
-  ({ part_bracket_len, part_width, part_height, part_id_margin_top, part_id_margin_left } = styles);
-  ({ consumer_m_init_margin_left, consumer_m_margin_bottom,
-     consumer_m_text_margin_bottom, consumer_m_offset_bottom } = styles);
-  ({ part, consumers, top_y, midpoint_x, container } = computed);
+  const { svg_width } = styles;
+  const { part_bracket_len, part_width, part_height, part_id_margin_top, part_id_margin_left } = styles;
+  const { consumer_m_init_margin_left, consumer_m_margin_bottom,
+          consumer_m_text_margin_bottom, consumer_m_offset_bottom } = styles;
+  const { part, consumers, top_y, midpoint_x, container } = computed;
 
   const b_len = part_bracket_len;
 
@@ -149,10 +149,10 @@ function build_partition_data(coll, rows, styles, computed) {
 }
 
 function build_coll_label_data(coll, styles, computed) {
-  ({ svg_width } = styles);
-  ({ coll_tip_len, coll_foot_len, coll_tip_margin_top } = styles);
-  ({ part_width, part_height } = styles);
-  ({ top_y, midpoint_x, container } = computed);
+  const { svg_width } = styles;
+  const { coll_tip_len, coll_foot_len, coll_tip_margin_top } = styles;
+  const { part_width, part_height } = styles;
+  const { top_y, midpoint_x, container } = computed;
 
   const left_x = midpoint_x - (part_width / 2);
   const right_x = midpoint_x + (part_width / 2);
@@ -199,16 +199,16 @@ function build_coll_label_data(coll, styles, computed) {
 }
 
 function build_colls_data(config, styles, computed) {
-  ({ collections } = config);
-  ({ coll_padding_top, coll_margin_bottom, coll_label_margin_bottom } = styles);
-  ({ part_height, part_margin_bottom } = styles);
-  ({ midpoint_x } = computed);
+  const { collections } = config;
+  const { coll_padding_top, coll_margin_bottom, coll_label_margin_bottom } = styles;
+  const { part_height, part_margin_bottom } = styles;
+  const { midpoint_x } = computed;
 
   let top_y = coll_padding_top;
   let result = [];
 
   for (const [coll, coll_data] of Object.entries(collections)) {
-    ({ partitions, consumers } = coll_data);
+    const { partitions, consumers } = coll_data;
 
     const container = `coll-${coll}`;
     const coll_result = { container: container };
@@ -217,7 +217,7 @@ function build_colls_data(config, styles, computed) {
     const label_computed = { top_y: top_y, midpoint_x: midpoint_x, container: container };
     const label_data = build_coll_label_data(coll, styles, label_computed);
 
-    ({ coll_label_data, bottom_y } = label_data);
+    const { coll_label_data, bottom_y } = label_data;
     top_y = bottom_y + coll_label_margin_bottom;
 
     for (const [partition, rows] of Object.entries(partitions)) {
@@ -246,15 +246,15 @@ function build_colls_data(config, styles, computed) {
 }
 
 function render_svg(data) {
-  ({ width, height } = data);
+  const { width, height } = data;
 
   const html = `<svg class="system" width="${width}" height="${height}"></svg>`;
   $(".animation-container").append(html);
 }
 
 function render_persistent_query(data) {
-  ({ line, brackets } = data);
-  ({ tl, tr, bl, br } = brackets);
+  const { line, brackets } = data;
+  const { tl, tr, bl, br } = brackets;
 
   const html = `
 <g class="persistent-query-container">
@@ -272,7 +272,7 @@ function render_persistent_query(data) {
 function render_rows(data) {
   let row_html = "";
   for (const row of data) {
-    ({ width, height, x, y } = row);
+    const { width, height, x, y } = row;
     row_html += `<rect width="${width}" height="${height}" x="${x}" y="${y}" class="row"></rect>`;
   }
 
@@ -280,8 +280,8 @@ function render_rows(data) {
 }
 
 function render_consumer_marker(data) {
-  ({ part, consumers } = data);
-  ({ init_margin_left, arrow_margin_bottom, text_margin_bottom, offset_bottom } = consumers );
+  const { part, consumers } = data;
+  const { init_margin_left, arrow_margin_bottom, text_margin_bottom, offset_bottom } = consumers;
 
   let consumer_markers_html = "";
 
@@ -308,10 +308,10 @@ function render_consumer_marker(data) {
 }
 
 function render_partition(data) {
-  ({ container, id, brackets, part, rows } = data);
-  ({ tl, tr, bl, br } = brackets);
+  const { container, id, brackets, part, rows } = data;
+  const { tl, tr, bl, br } = brackets;
 
-  const rows_html = render_rows(rows, styles, { right_x: right_x, top_y: top_y });
+  const rows_html = render_rows(rows);
   const consumer_markers_html = render_consumer_marker(data);
 
   const html = `
@@ -332,7 +332,7 @@ function render_partition(data) {
 }
 
 function render_coll_label(data) {
-  ({ container, label, tip, bar, left_foot, right_foot } = data);
+  const { container, label, tip, bar, left_foot, right_foot } = data;
 
   const html =`
 <g class="coll-label">
@@ -351,7 +351,7 @@ function render_coll_container(data) {
 }
 
 function render_colls(data) {
-  ({ collections } = data);
+  const { collections } = data;
   
   for (const coll of collections) {
     render_coll_container(coll.container);
@@ -474,7 +474,7 @@ function vertically_center_layout(layout_data) {
 }
 
 function build_layout_data(configs, styles) {
-  ({ svg_width } = styles);
+  const { svg_width } = styles;
 
   const n = configs.length;
   const column_width = (svg_width / n);
@@ -506,11 +506,11 @@ const styles = {
   coll_tip_len: 10,
   coll_foot_len: 10,
   coll_tip_margin_top: 5,
-  coll_label_margin_bottom: 55,
+  coll_label_margin_bottom: 25,
 
   part_width: 200,
   part_height: 50,
-  part_margin_bottom: 50,
+  part_margin_bottom: 20,
   part_bracket_len: 10,
   part_id_margin_left: -15,
   part_id_margin_top: 8,
@@ -530,7 +530,7 @@ const inputs = {
   kind: "collections",
   collections: {
     s1: {
-      consumers: ["pq1", "pq2"],
+      consumers: ["pq1"],
       partitions: {
         0: [
           { value: 42, t: 1 },
@@ -551,21 +551,20 @@ const inputs = {
           { value: 40, t: 2 }
         ]
       }
+    } ,
+    s3: {
+      consumers: ["pq1"],
+      partitions: {
+        0: [
+          { value: 42, t: 1 },
+          { value: 40, t: 2 },
+          { value: 42, t: 6 }
+        ],
+        1: [
+          { value: 42, t: 1 }
+        ]
+      }
     }
-    ,
-    // s3: {
-    //   consumers: ["pq1"],
-    //   partitions: {
-    //     0: [
-    //       { value: 42, t: 1 },
-    //       { value: 40, t: 2 },
-    //       { value: 42, t: 6 }
-    //     ],
-    //     1: [
-    //       { value: 42, t: 1 }
-    //     ]
-    //   }
-    // }
   }
 };
 
@@ -587,7 +586,7 @@ const outputs = {
 };
 
 $(document).ready(function() {
-  ({ svg_width } = styles);
+  const { svg_width } = styles;
 
   const svg_data = build_svg_data(styles);
   render(svg_data);
