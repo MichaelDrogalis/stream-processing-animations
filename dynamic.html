@@ -8,7 +8,8 @@
   </head>
 
   <body>
-    <div class="animation-container">
+    <div class="animation-container-1">
+      <h1>A basic topology</h1>
       <div class="controls">
         <button class="play">Play</button>
         <button class="pause">Pause</button>
@@ -18,6 +19,46 @@
 
       <pre style="text-align: center;">CREATE STREAM s2 AS SELECT a, b FROM s1 WHERE b = 42 EMIT CHANGES;</pre>
     </div>
+
+
+    <div class="animation-container-2">
+      <h1>Many partitions</h1>
+      <div class="controls">
+        <button class="play">Play</button>
+        <button class="pause">Pause</button>
+        <button class="restart">Restart</button>
+        <input class="progress" step=".001" type="range" min="0" max="100" value="0"/>
+      </div>
+
+      <pre style="text-align: center;">CREATE STREAM s2 AS SELECT a, b FROM s1 WHERE b = 42 EMIT CHANGES;</pre>
+    </div>
+
+
+    <div class="animation-container-3">
+      <h1>Many streams</h1>
+      <div class="controls">
+        <button class="play">Play</button>
+        <button class="pause">Pause</button>
+        <button class="restart">Restart</button>
+        <input class="progress" step=".001" type="range" min="0" max="100" value="0"/>
+      </div>
+
+      <pre style="text-align: center;">CREATE STREAM s2 AS SELECT a, b FROM s1 WHERE b = 42 EMIT CHANGES;</pre>
+    </div>
+
+
+    <div class="animation-container-4">
+      <h1>Multi-stage</h1>
+      <div class="controls">
+        <button class="play">Play</button>
+        <button class="pause">Pause</button>
+        <button class="restart">Restart</button>
+        <input class="progress" step=".001" type="range" min="0" max="100" value="0"/>
+      </div>
+
+      <pre style="text-align: center;">CREATE STREAM s2 AS SELECT a, b FROM s1 WHERE b = 42 EMIT CHANGES;</pre>
+    </div>
+
 
     <script src="node_modules/jquery/dist/jquery.min.js"></script>
     <script src="node_modules/@dagrejs/graphlib/dist/graphlib.min.js"></script>

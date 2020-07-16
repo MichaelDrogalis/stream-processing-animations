@@ -641,66 +641,38 @@ const styles = {
   consumer_m_offset_bottom: 30
 };
 
-let t = new Topology();
+function animate_1() {
+  let t = new Topology();
 
-t.add_root({
-  name: "s1",
-  kind: "collection",
-  partitions: {
-    0: [
-      { value: 42, t: 1 },
-      { value: 40, t: 2 },
-      { value: 42, t: 3 },
-      { value: 39, t: 4 },
-      { value: 51, t: 5 },
-      { value: 42, t: 6 }
-    ],
-    1: [
-      { value: 42, t: 1 },
-      { value: 40, t: 2 },
-      { value: 42, t: 3 },
-      { value: 39, t: 4 }
-    ],
-    2: [
-      { value: 42, t: 1 },
-      { value: 40, t: 2 }
-    ]
-  }
-});
+  t.add_root({
+    name: "s1",
+    kind: "collection",
+    partitions: {
+      0: [
+        { value: 42, t: 1 },
+        { value: 40, t: 2 },
+        { value: 42, t: 3 },
+        { value: 39, t: 4 },
+        { value: 51, t: 5 },
+        { value: 42, t: 6 }
+      ]
+    }
+  });
 
-t.add_root({
-  name: "s3",
-  kind: "collection",
-  partitions: {
-    0: [
-      { value: 42, t: 1 },
-      { value: 40, t: 2 },
-      { value: 42, t: 6 }
-    ],
-    1: [
-      { value: 42, t: 1 }
-    ]
-  }
-});
+  t.add_child(["s1"], {
+    name: "pq1",
+    kind: "persistent_query"
+  });
 
-t.add_child(["s1", "s3"], {
-  name: "pq1",
-  kind: "persistent_query"
-});
-
-t.add_child(["pq1"], {
-  name: "s2",
-  kind: "collection",
-  partitions: {
-    0: [],
-    1: [],
-    2: []
-  }
-});
-
-
-$(document).ready(function() {
-  const container = ".animation-container";
+  t.add_child(["pq1"], {
+    name: "s2",
+    kind: "collection",
+    partitions: {
+      0: []
+    }
+  });
+  
+  const container = ".animation-container-1";
   const { svg_width } = styles;
 
   const svg_data = build_svg_data(styles);
@@ -711,4 +683,210 @@ $(document).ready(function() {
 
   // Repaint.
   $(container).html($(container).html());
+}
+
+function animate_2() {
+  let t = new Topology();
+
+  t.add_root({
+    name: "s1",
+    kind: "collection",
+    partitions: {
+      0: [
+        { value: 42, t: 1 },
+        { value: 40, t: 2 },
+        { value: 42, t: 3 },
+        { value: 39, t: 4 },
+        { value: 51, t: 5 },
+        { value: 42, t: 6 }
+      ],
+      1: [
+        { value: 42, t: 1 },
+        { value: 40, t: 2 },
+        { value: 42, t: 3 },
+        { value: 39, t: 4 }
+      ],
+      2: [
+        { value: 42, t: 1 },
+        { value: 40, t: 2 }
+      ]
+    }
+  });
+
+  t.add_child(["s1"], {
+    name: "pq1",
+    kind: "persistent_query"
+  });
+
+  t.add_child(["pq1"], {
+    name: "s2",
+    kind: "collection",
+    partitions: {
+      0: [],
+      1: [],
+      2: []
+    }
+  });
+  
+  const container = ".animation-container-2";
+  const { svg_width } = styles;
+
+  const svg_data = build_svg_data(styles);
+  render_svg(container, svg_data);
+
+  const layout = t.horizontal_layout(styles);
+  layout.forEach(data => render(data));
+
+  // Repaint.
+  $(container).html($(container).html());
+}
+
+function animate_3() {
+  let t = new Topology();
+
+  t.add_root({
+    name: "s1",
+    kind: "collection",
+    partitions: {
+      0: [
+        { value: 42, t: 1 },
+        { value: 40, t: 2 },
+        { value: 42, t: 3 },
+        { value: 39, t: 4 },
+        { value: 51, t: 5 },
+        { value: 42, t: 6 }
+      ],
+      1: [
+        { value: 42, t: 1 },
+        { value: 40, t: 2 },
+        { value: 42, t: 3 },
+        { value: 39, t: 4 }
+      ],
+      2: [
+        { value: 42, t: 1 },
+        { value: 40, t: 2 }
+      ]
+    }
+  });
+
+  t.add_root({
+    name: "s3",
+    kind: "collection",
+    partitions: {
+      0: [
+        { value: 42, t: 1 },
+        { value: 40, t: 2 },
+        { value: 42, t: 6 }
+      ],
+      1: [
+        { value: 42, t: 1 }
+      ]
+    }
+  });
+
+  t.add_child(["s1", "s3"], {
+    name: "pq1",
+    kind: "persistent_query"
+  });
+
+  t.add_child(["pq1"], {
+    name: "s2",
+    kind: "collection",
+    partitions: {
+      0: [],
+      1: [],
+      2: []
+    }
+  });
+  
+  const container = ".animation-container-3";
+  const { svg_width } = styles;
+
+  const svg_data = build_svg_data(styles);
+  render_svg(container, svg_data);
+
+  const layout = t.horizontal_layout(styles);
+  layout.forEach(data => render(data));
+
+  // Repaint.
+  $(container).html($(container).html());
+}
+
+function animate_4() {
+  let t = new Topology();
+
+  t.add_root({
+    name: "s1",
+    kind: "collection",
+    partitions: {
+      0: [
+        { value: 42, t: 1 },
+        { value: 40, t: 2 },
+        { value: 42, t: 3 },
+        { value: 39, t: 4 },
+        { value: 51, t: 5 },
+        { value: 42, t: 6 }
+      ],
+      1: [
+        { value: 42, t: 1 },
+        { value: 40, t: 2 },
+        { value: 42, t: 3 },
+        { value: 39, t: 4 }
+      ],
+      2: [
+        { value: 42, t: 1 },
+        { value: 40, t: 2 }
+      ]
+    }
+  });
+
+  t.add_child(["s1"], {
+    name: "pq1",
+    kind: "persistent_query"
+  });
+
+  t.add_child(["pq1"], {
+    name: "s2",
+    kind: "collection",
+    partitions: {
+      0: [],
+      1: [],
+      2: []
+    }
+  });
+
+  t.add_child(["s2"], {
+    name: "pq2",
+    kind: "persistent_query"
+  });
+
+  t.add_child(["pq2"], {
+    name: "s3",
+    kind: "collection",
+    partitions: {
+      0: [],
+      1: [],
+      2: []
+    }
+  });
+
+  const container = ".animation-container-4";
+  const { svg_width } = styles;
+
+  const svg_data = build_svg_data(styles);
+  render_svg(container, svg_data);
+
+  const layout = t.horizontal_layout(styles);
+  layout.forEach(data => render(data));
+
+  // Repaint.
+  $(container).html($(container).html());
+}
+
+
+$(document).ready(function() {
+  animate_1();
+  animate_2();
+  animate_3();
+  animate_4();
 });
