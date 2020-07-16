@@ -1,15 +1,17 @@
 function build_svg_data(styles) {
-  const { svg_width, svg_height } = styles;
+  const { svg_width, svg_height, svg_target } = styles;
 
   return {
     kind: "svg",
     width: svg_width,
-    height: svg_height
+    height: svg_height,
+    target: svg_target
   };
 }
 
 function build_persistent_query_data(config, styles, computed) {
   const { name } = config;
+  const { svg_target } = styles;
   const { pq_width, pq_height, pq_margin_top, pq_bracket_len } = styles;
   const { pq_label_margin_left, pq_label_margin_bottom } = styles;
   const { top_y, midpoint_x } = computed;
@@ -35,6 +37,7 @@ function build_persistent_query_data(config, styles, computed) {
         x: left_x + pq_label_margin_left,
         y: this_top_y - pq_label_margin_bottom
       },
+      target: svg_target,
       brackets: {
         tl: {
           x: left_x + b_len,
@@ -212,6 +215,7 @@ function build_coll_label_data(coll, styles, computed) {
 
 function build_collection_data(config, styles, computed) {
   const { name, partitions } = config;
+  const { svg_target } = styles;
   const { coll_padding_top, coll_margin_bottom, coll_label_margin_bottom } = styles;
   const { part_height, part_margin_bottom } = styles;
   const { midpoint_x } = computed;
@@ -246,6 +250,7 @@ function build_collection_data(config, styles, computed) {
     data: {
       kind: "collection",
       container: container,
+      target: svg_target,
       label: coll_label_data,
       partitions: partitions_result,
     },
@@ -255,15 +260,15 @@ function build_collection_data(config, styles, computed) {
   };
 }
 
-function render_svg(data) {
-  const { width, height } = data;
+function render_svg(container, data) {
+  const { width, height, target } = data;
 
-  const html = `<svg class="system" width="${width}" height="${height}"></svg>`;
-  $(".animation-container").append(html);
+  const html = `<svg class="${target}" width="${width}" height="${height}"></svg>`;
+  $(container).append(html);
 }
 
 function render_persistent_query(data) {
-  const { line, brackets, label } = data;
+  const { line, brackets, label, target } = data;
   const { tl, tr, bl, br } = brackets;
 
   const html = `
@@ -278,7 +283,7 @@ function render_persistent_query(data) {
     <text x="${label.x}" y ="${label.y}" class="code">${label.name}</text>
 </g>`;
 
-  $(".system").append(html);
+  $("." + target).append(html);
 }
 
 function render_rows(data) {
@@ -359,11 +364,12 @@ function render_coll_label(data) {
 }
 
 function render_coll_container(data) {
-  $(".system").append(`<g class="coll-container ${data}"></g>`);
+  const { target, container } = data;
+  $("." + target).append(`<g class="coll-container ${container}"></g>`);
 }
 
 function render_collection(data) {
-  render_coll_container(data.container);
+  render_coll_container(data);
   render_coll_label(data.label);
 
   for (const partition of data.partitions) {
@@ -409,9 +415,6 @@ function rendered_y_bottom(data) {
 
 function render(data) {
   switch(data.kind) {
-  case "svg":
-    render_svg(data);
-    break;
   case "collection":
     render_collection(data);
     break;
@@ -602,6 +605,7 @@ Topology.prototype.horizontal_layout = function(styles) {
 
 
 const styles = {
+  svg_target: "system",
   svg_width: 1200,
   svg_height: 500,
 
@@ -696,14 +700,15 @@ t.add_child(["pq1"], {
 
 
 $(document).ready(function() {
+  const container = ".animation-container";
   const { svg_width } = styles;
 
   const svg_data = build_svg_data(styles);
-  render(svg_data);
+  render_svg(container, svg_data);
 
   const layout = t.horizontal_layout(styles);
   layout.forEach(data => render(data));
 
   // Repaint.
-  $(".system").html($(".system").html());
+  $(container).html($(container).html());
 });
