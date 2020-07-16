@@ -9,7 +9,9 @@ function build_svg_data(styles) {
 }
 
 function build_persistent_query_data(config, styles, computed) {
+  const { name } = config;
   const { pq_width, pq_height, pq_margin_top, pq_bracket_len } = styles;
+  const { pq_label_margin_left, pq_label_margin_bottom } = styles;
   const { top_y, midpoint_x } = computed;
 
   const this_top_y = top_y + pq_margin_top;
@@ -27,6 +29,11 @@ function build_persistent_query_data(config, styles, computed) {
         y1: 0,
         x2: midpoint_x,
         y2: line_bottom_y
+      },
+      label: {
+        name: name,
+        x: left_x + pq_label_margin_left,
+        y: this_top_y - pq_label_margin_bottom
       },
       brackets: {
         tl: {
@@ -256,7 +263,7 @@ function render_svg(data) {
 }
 
 function render_persistent_query(data) {
-  const { line, brackets } = data;
+  const { line, brackets, label } = data;
   const { tl, tr, bl, br } = brackets;
 
   const html = `
@@ -267,6 +274,8 @@ function render_persistent_query(data) {
     <path d="M ${tr.x},${tr.y} h ${tr.h} v ${tr.v}" class="pq"></path>
     <path d="M ${bl.x},${bl.y} v ${bl.v} h ${bl.h}" class="pq"></path>
     <path d="M ${br.x},${br.y} v ${br.v} h ${br.h}" class="pq"></path>
+
+    <text x="${label.x}" y ="${label.y}" class="code">${label.name}</text>
 </g>`;
 
   $(".system").append(html);
@@ -412,7 +421,7 @@ function render(data) {
   }
 }
 
-function collections_translate_y(data, height) {
+function collection_translate_y(data, height) {
   data.label.label.y += height;
 
   data.label.tip.y1 += height;
@@ -454,6 +463,8 @@ function persistent_query_translate_y(data, height) {
   data.brackets.tr.y += height;
   data.brackets.bl.y += height;
   data.brackets.br.y += height;
+
+  data.label.y += height;
   
   return data;
 }
@@ -461,7 +472,7 @@ function persistent_query_translate_y(data, height) {
 function translate_y(data, height) {
   switch(data.kind) {
   case "collection":
-    return collections_translate_y(data, height);
+    return collection_translate_y(data, height);
   case "persistent_query":
     return persistent_query_translate_y(data, height);
   }
@@ -598,6 +609,8 @@ const styles = {
   pq_height: 150,
   pq_margin_top: 50,
   pq_bracket_len: 25,
+  pq_label_margin_left: 0,
+  pq_label_margin_bottom: 10,
 
   coll_padding_top: 10,
   coll_margin_bottom: 10,
