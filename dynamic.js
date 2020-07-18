@@ -1,3 +1,12 @@
+/////////////// Layout data builder
+
+function build_controls_data(styles) {
+  return {
+    start: 0,
+    step: .001
+  }
+}
+
 function build_svg_data(styles) {
   const { svg_width, svg_height, svg_target } = styles;
 
@@ -63,7 +72,8 @@ function build_persistent_query_data(config, styles, computed) {
           v: b_len,
           h: -b_len
         }
-      }
+      },
+      midpoint_y: bottom_y - (pq_height / 2)
     },
     state: {
       bottom_y: bottom_y
@@ -86,7 +96,7 @@ function build_row_data(row, styles, computed) {
   };
 }
 
-function build_rows_data (rows, styles, computed) {
+function build_rows_data(rows, styles, computed) {
   const { row_width, row_margin_left, row_offset_right } = styles;
   const { right_x, top_y } = computed;
   
@@ -103,6 +113,29 @@ function build_rows_data (rows, styles, computed) {
   return result;
 }
 
+function build_shadow_rows_data(rows, styles, computed) {
+  const { part_height } = styles;
+  const { row_width, row_height } = styles;
+  const { m_row_margin_left } = styles;
+  const { right_x, top_y } = computed;
+
+  const row_x = right_x + m_row_margin_left;
+  const row_y = top_y + (part_height / 2) - (row_height / 2);
+  
+  return rows.map(({ id, collection, partition, offset }) => {
+    return {
+      width: row_width,
+      height: row_height,
+      x: row_x,
+      y: row_y,
+      id: id,
+      collection: collection,
+      partition: partition,
+      offset: offset
+    };
+  });
+}
+
 function build_partition_data(coll, rows, styles, computed) {
   const { svg_width } = styles;
   const { part_bracket_len, part_width, part_height, part_id_margin_top, part_id_margin_left } = styles;
@@ -117,6 +150,7 @@ function build_partition_data(coll, rows, styles, computed) {
   const bottom_y = top_y + part_height;
 
   const rows_data = build_rows_data(rows, styles, { right_x: right_x, top_y: top_y });
+  const shadow_rows_data = build_shadow_rows_data(rows, styles, { right_x: right_x, top_y: top_y });
 
   return {
     container: container,
@@ -159,7 +193,8 @@ function build_partition_data(coll, rows, styles, computed) {
         h: -b_len
       }
     },
-    rows: rows_data
+    rows: rows_data,
+    shadow_rows: shadow_rows_data
   };
 }
 
@@ -260,10 +295,26 @@ function build_collection_data(config, styles, computed) {
   };
 }
 
+/////////////// Renderer
+
 function render_svg(container, data) {
   const { width, height, target } = data;
 
   const html = `<svg class="${target}" width="${width}" height="${height}"></svg>`;
+  $(container).append(html);
+}
+
+function render_controls(container, data) {
+
+  const html = `
+<div class="controls">    
+    <button class="play">Play</button>
+    <button class="pause">Pause</button>
+    <button class="restart">Restart</button>
+    <input class="progress" step="${data.step}" type="range" min="0" max="100" value="${data.start}"/>
+</div>
+`;
+
   $(container).append(html);
 }
 
@@ -291,6 +342,17 @@ function render_rows(data) {
   for (const row of data) {
     const { width, height, x, y } = row;
     row_html += `<rect width="${width}" height="${height}" x="${x}" y="${y}" class="row"></rect>`;
+  }
+
+  return row_html;
+}
+
+function render_shadow_rows(data) {
+  let row_html = "";
+  for (const row of data) {
+    const { width, height, x, y } = row;
+    const { collection, partition, offset } = row;
+    row_html += `<rect width="${width}" height="${height}" x="${x}" y="${y}" class="row collection-${collection} partition-${partition} offset-${offset}"></rect>`;
   }
 
   return row_html;
@@ -325,10 +387,11 @@ function render_consumer_marker(data) {
 }
 
 function render_partition(data) {
-  const { container, id, brackets, part, rows } = data;
+  const { container, id, brackets, part, rows, shadow_rows } = data;
   const { tl, tr, bl, br } = brackets;
 
   const rows_html = render_rows(rows);
+  const shadow_rows_html = render_shadow_rows(shadow_rows);
   const consumer_markers_html = render_consumer_marker(data);
 
   const html = `
@@ -342,6 +405,7 @@ function render_partition(data) {
 
     ${consumer_markers_html}
     ${rows_html}
+    ${shadow_rows_html}
 </g>
 `;
 
@@ -376,6 +440,8 @@ function render_collection(data) {
     render_partition(partition);
   }
 }
+
+/////////////// Vertical centering
 
 function coll_y_top(data) {
   return data.label.label.y;
@@ -453,6 +519,12 @@ function collection_translate_y(data, height) {
       return row;
     });
 
+    partition.shadow_rows = partition.shadow_rows.map(row => {
+      row.y += height;
+
+      return row;
+    });
+
     return partition;
   });
   
@@ -508,16 +580,6 @@ function vertically_center_layout(layout_data) {
   });
 }
 
-function inverse_map(m) {
-  return Object.entries(m).reduce((all, [k, v]) => {
-    let new_v = all[v] || [];
-    new_v.push(k);
-    all[v] = new_v;
-
-    return all;
-  }, {})
-};
-
 function build_data(node, styles, computed) {
   switch(node.kind) {
   case "collection":
@@ -528,26 +590,73 @@ function build_data(node, styles, computed) {
   }
 }
 
-function Topology() {
+function add_metadata(component) {
+  switch(component.kind) {
+  case "collection":
+    Object.entries(component.partitions).forEach(([id, partition]) => {
+      partition.forEach((row, i) => {
+        row.id = uuidv4();
+        row.collection = component.name;
+        row.partition = id;
+        row.offset = i;
+      });
+    });
+
+    return component;
+  default:
+    return component;
+  }
+}
+
+/////////////// Public API
+
+function Specimen() {
   this._graph = new graphlib.Graph();
 }
 
-Topology.prototype.add_root = function(x) {
-  this._graph.setNode(x.name, x);
+Specimen.prototype.add_root = function(node) {
+  this._graph.setNode(node.name, add_metadata(node));
   return this;
 }
 
-Topology.prototype.add_child = function(parents, x) {
-  this._graph.setNode(x.name, x);
+Specimen.prototype.add_child = function(parents, node) {
+  this._graph.setNode(node.name, add_metadata(node));
 
   parents.forEach(parent => {
-    this._graph.setEdge(parent, x.name);
+    this._graph.setEdge(parent, node.name);
   });
 
   return this;
 }
 
-Topology.prototype.layout_buckets = function() {
+Specimen.prototype.get_node = function(name) {
+  return this._graph.node(name);
+}
+
+Specimen.prototype.node_kinds = function() {
+  const nodes = this._graph.nodes();
+  const vals = nodes.map(node => {
+    return this._graph.node(node);
+  });
+  
+  return vals.reduce((all, node) => {
+    let group = all[node.kind] || {};
+    group[node.name] = node;
+    all[node.kind] = group;
+
+    return all;
+  }, {});
+}
+
+Specimen.prototype.sink_collections = function() {
+  return this._graph.sinks();
+}
+
+Specimen.prototype.parents = function(name) {
+  return this._graph.predecessors(name);
+}
+
+Specimen.prototype.layout_buckets = function() {
   let index = {};
   const seq = graphlib.alg.topsort(this._graph);
 
@@ -571,7 +680,7 @@ Topology.prototype.layout_buckets = function() {
   return inverse_map(index);
 }
 
-Topology.prototype.horizontal_layout = function(styles) {
+Specimen.prototype.horizontal_layout = function(styles) {
   const { svg_width } = styles;
 
   const buckets = this.layout_buckets();
@@ -590,6 +699,7 @@ Topology.prototype.horizontal_layout = function(styles) {
       const computed = { top_y: top_y, midpoint_x: midpoint_x };
       const { data, state } = build_data(node, styles, computed);
 
+      data.name = name;
       top_y = state.bottom_y;
       result.push(data)
     });
@@ -601,8 +711,19 @@ Topology.prototype.horizontal_layout = function(styles) {
   return vertically_center_layout(layout).flatMap(xs => xs);
 }
 
+Specimen.prototype.render = function(layout, container, styles) {
+  const controls_data = build_controls_data(styles);
+  render_controls(container, controls_data);
 
+  const { svg_width } = styles;
+  const svg_data = build_svg_data(styles);
+  render_svg(container, svg_data);
 
+  layout.forEach(data => render(data));
+
+  // Repaint.
+  $(container).html($(container).html());
+}
 
 const styles = {
   svg_target: "system",
@@ -635,258 +756,339 @@ const styles = {
   row_margin_left: 10,
   row_offset_right: 25,
 
+  m_row_margin_left: 10,
+
   consumer_m_init_margin_left: -1,
   consumer_m_margin_bottom: 3,
   consumer_m_text_margin_bottom: 15,
   consumer_m_offset_bottom: 30
 };
 
-function animate_1() {
-  let t = new Topology();
 
-  t.add_root({
-    name: "s1",
-    kind: "collection",
-    partitions: {
-      0: [
-        { value: 42, t: 1 },
-        { value: 40, t: 2 },
-        { value: 42, t: 3 },
-        { value: 39, t: 4 },
-        { value: 51, t: 5 },
-        { value: 42, t: 6 }
-      ]
+/////////////// Runtime
+
+function choose_lowest_timestamp(collections) {
+  let choices = []
+
+  Object.entries(collections).forEach(([name, { partitions }]) => {
+    Object.entries(partitions).forEach(([id, partition]) => {
+      if (partition.length > 0) {
+        const props = { collection: name, partition: id };
+        choices.push({ ...partition[0], ...props });
+      }
+    });
+  });
+
+  return choices.reduce((result, row) => {
+    if (result == undefined) {
+      return row;
+    } else if (row.t < result.t) {
+      return row;
+    } else {
+      return result;
     }
-  });
-
-  t.add_child(["s1"], {
-    name: "pq1",
-    kind: "persistent_query"
-  });
-
-  t.add_child(["pq1"], {
-    name: "s2",
-    kind: "collection",
-    partitions: {
-      0: []
-    }
-  });
-  
-  const container = ".animation-container-1";
-  const { svg_width } = styles;
-
-  const svg_data = build_svg_data(styles);
-  render_svg(container, svg_data);
-
-  const layout = t.horizontal_layout(styles);
-  layout.forEach(data => render(data));
-
-  // Repaint.
-  $(container).html($(container).html());
+  }, undefined);
 }
 
-function animate_2() {
-  let t = new Topology();
+/////////////// Util
 
-  t.add_root({
-    name: "s1",
-    kind: "collection",
-    partitions: {
-      0: [
-        { value: 42, t: 1 },
-        { value: 40, t: 2 },
-        { value: 42, t: 3 },
-        { value: 39, t: 4 },
-        { value: 51, t: 5 },
-        { value: 42, t: 6 }
-      ],
-      1: [
-        { value: 42, t: 1 },
-        { value: 40, t: 2 },
-        { value: 42, t: 3 },
-        { value: 39, t: 4 }
-      ],
-      2: [
-        { value: 42, t: 1 },
-        { value: 40, t: 2 }
-      ]
-    }
+function uuidv4() {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
   });
-
-  t.add_child(["s1"], {
-    name: "pq1",
-    kind: "persistent_query"
-  });
-
-  t.add_child(["pq1"], {
-    name: "s2",
-    kind: "collection",
-    partitions: {
-      0: [],
-      1: [],
-      2: []
-    }
-  });
-  
-  const container = ".animation-container-2";
-  const { svg_width } = styles;
-
-  const svg_data = build_svg_data(styles);
-  render_svg(container, svg_data);
-
-  const layout = t.horizontal_layout(styles);
-  layout.forEach(data => render(data));
-
-  // Repaint.
-  $(container).html($(container).html());
 }
 
-function animate_3() {
-  let t = new Topology();
+function inverse_map(m) {
+  return Object.entries(m).reduce((all, [k, v]) => {
+    let new_v = all[v] || [];
+    new_v.push(k);
+    all[v] = new_v;
 
-  t.add_root({
-    name: "s1",
-    kind: "collection",
-    partitions: {
-      0: [
-        { value: 42, t: 1 },
-        { value: 40, t: 2 },
-        { value: 42, t: 3 },
-        { value: 39, t: 4 },
-        { value: 51, t: 5 },
-        { value: 42, t: 6 }
-      ],
-      1: [
-        { value: 42, t: 1 },
-        { value: 40, t: 2 },
-        { value: 42, t: 3 },
-        { value: 39, t: 4 }
-      ],
-      2: [
-        { value: 42, t: 1 },
-        { value: 40, t: 2 }
-      ]
-    }
-  });
+    return all;
+  }, {})
+};
 
-  t.add_root({
-    name: "s3",
-    kind: "collection",
-    partitions: {
-      0: [
-        { value: 42, t: 1 },
-        { value: 40, t: 2 },
-        { value: 42, t: 6 }
-      ],
-      1: [
-        { value: 42, t: 1 }
-      ]
-    }
-  });
-
-  t.add_child(["s1", "s3"], {
-    name: "pq1",
-    kind: "persistent_query"
-  });
-
-  t.add_child(["pq1"], {
-    name: "s2",
-    kind: "collection",
-    partitions: {
-      0: [],
-      1: [],
-      2: []
-    }
-  });
-  
-  const container = ".animation-container-3";
-  const { svg_width } = styles;
-
-  const svg_data = build_svg_data(styles);
-  render_svg(container, svg_data);
-
-  const layout = t.horizontal_layout(styles);
-  layout.forEach(data => render(data));
-
-  // Repaint.
-  $(container).html($(container).html());
+function index_by_name(layout) {
+  return layout.reduce((all, x) => {
+    all[x.name] = x;
+    return all;
+  }, {});
 }
 
-function animate_4() {
-  let t = new Topology();
+function index_by(xs, k) {
+  return xs.reduce((all, x) => {
+    all[x[k]] = x;
 
-  t.add_root({
-    name: "s1",
-    kind: "collection",
-    partitions: {
-      0: [
-        { value: 42, t: 1 },
-        { value: 40, t: 2 },
-        { value: 42, t: 3 },
-        { value: 39, t: 4 },
-        { value: 51, t: 5 },
-        { value: 42, t: 6 }
-      ],
-      1: [
-        { value: 42, t: 1 },
-        { value: 40, t: 2 },
-        { value: 42, t: 3 },
-        { value: 39, t: 4 }
-      ],
-      2: [
-        { value: 42, t: 1 },
-        { value: 40, t: 2 }
-      ]
-    }
-  });
-
-  t.add_child(["s1"], {
-    name: "pq1",
-    kind: "persistent_query"
-  });
-
-  t.add_child(["pq1"], {
-    name: "s2",
-    kind: "collection",
-    partitions: {
-      0: [],
-      1: [],
-      2: []
-    }
-  });
-
-  t.add_child(["s2"], {
-    name: "pq2",
-    kind: "persistent_query"
-  });
-
-  t.add_child(["pq2"], {
-    name: "s3",
-    kind: "collection",
-    partitions: {
-      0: [],
-      1: [],
-      2: []
-    }
-  });
-
-  const container = ".animation-container-4";
-  const { svg_width } = styles;
-
-  const svg_data = build_svg_data(styles);
-  render_svg(container, svg_data);
-
-  const layout = t.horizontal_layout(styles);
-  layout.forEach(data => render(data));
-
-  // Repaint.
-  $(container).html($(container).html());
+    return all;
+  }, {});
 }
 
+function index_rows(layout) {
+  return layout.reduce((all, node) => {
+    if (node.kind == "collection") {
+      node.partitions.forEach(partition => {
+        partition.shadow_rows.forEach(row => {
+          all[row.id] = {
+            x: row.x,
+            y: row.y,
+            width: row.width,
+            height: row.height
+          };
+        });
+      });
+    }
 
-$(document).ready(function() {
-  animate_1();
-  animate_2();
-  animate_3();
-  animate_4();
+    return all;
+  }, {});
+}
+
+function cycle_array(arr) {
+  arr.push(arr.shift());
+  return arr;
+}
+
+function select_keys(m, keys) {
+  return keys.reduce((all, key) => {
+    all[key] = m[key];
+    return all;
+  }, {});
+}
+
+function relative_add(x) {
+  return "+=" + x;
+}
+
+// $(document).ready(function() {
+// });
+
+
+let s = new Specimen();
+
+s.add_root({
+  name: "s1",
+  kind: "collection",
+  partitions: {
+    0: [
+      { value: 40, t: 2 },
+      { value: 41, t: 4 },
+      { value: 42, t: 7 }
+    ],
+    1: [
+      { value: 30, t: 1 },
+      { value: 31, t: 3 },
+      { value: 32, t: 5 },
+      { value: 33, t: 6 }
+    ]
+  }
 });
+
+s.add_child(["s1"], {
+  name: "pq1",
+  kind: "persistent_query",
+  fn: function(row) {
+    return { ...row, ...{ collection: "s2" } };
+  }
+});
+
+s.add_child(["pq1"], {
+  name: "s2",
+  kind: "collection",
+  partitions: {
+    0: [],
+    1: []
+  }
+});
+
+// s.add_child(["s2"], {
+//   name: "pq2",
+//   kind: "persistent_query",
+//   fn: function(row) {
+//     return { ...row, ...{ collection: "s3" } };
+//   }
+// });
+
+// s.add_child(["pq2"], {
+//   name: "s3",
+//   kind: "collection",
+//   partitions: {
+//     0: [],
+//     1: []
+//   }
+// });
+
+const container = ".animation-container-1";
+const layout = s.horizontal_layout(styles);
+s.render(layout, container, styles);
+
+
+
+function without_sinks(colls, sinks) {
+  return Object.entries(colls).reduce((all, [name, coll]) => {
+    if (!sinks.includes(coll.name)) {
+      all.push(coll);
+    }
+
+    return all;
+  }, []);
+}
+
+function is_drained(non_sinks) {
+  return non_sinks.every(coll => {
+    return Object.entries(coll.partitions).every(([partition, rows]) => {
+      return rows.length == 0;
+    });
+  });
+}
+
+function swap_partitions(colls, old_row, new_row) {
+  colls[old_row.collection].partitions[old_row.partition].shift();
+
+  const new_offset = colls[new_row.collection].partitions[new_row.partition].length;
+  new_row.offset = new_offset;
+  
+  colls[new_row.collection].partitions[new_row.partition].push(new_row);
+}
+
+function run_until_drained(specimen) {
+  const kinds = s.node_kinds();
+  const colls = kinds.collection;
+  const pqs = kinds.persistent_query;
+  const sinks = s.sink_collections();
+  const non_sinks = without_sinks(colls, sinks);
+
+  let pq_seq = Object.keys(pqs);
+  let actions = [];
+
+  while (!is_drained(non_sinks)) {
+    const pq = pq_seq[0];
+    const parents = s.parents(pq);
+    const parent_colls = select_keys(colls, parents);
+    const old_row = choose_lowest_timestamp(parent_colls);
+
+    if (old_row) {
+      const { fn } = pqs[pq];
+      const new_row = fn(old_row);
+
+      swap_partitions(colls, old_row, new_row);
+
+      const action = {
+        from: old_row.collection,
+        to: new_row.collection,
+        processed_by: pq,
+        old_row: old_row,
+        new_row: new_row
+      };
+
+      actions.push(action);
+    }
+    
+    pq_seq = cycle_array(pq_seq);
+  }
+
+  return actions;
+}
+
+function animation_sequence(layout, actions) {
+  const layout_index = index_by_name(layout);
+  let dynamic_elements = index_rows(layout);
+  let seq = [];
+
+  actions.forEach(action => {
+    const { old_row } = action;
+    const target = `.row.collection-${old_row.collection}.partition-${old_row.partition}.offset-${old_row.offset}`;
+
+    const old_row_position = dynamic_elements[old_row.id];
+    const old_row_x = old_row_position.x;
+    const old_row_y = old_row_position.y;
+
+    const row_width = dynamic_elements[old_row.id].width;
+
+    const pq_data = layout_index[action.processed_by];
+    const pq_enter_x = pq_data.brackets.bl.x;
+    const pq_enter_y = pq_data.midpoint_y;
+    const pq_exit_x = pq_data.brackets.br.x;
+
+    dynamic_elements[old_row.id].x = pq_enter_x;
+    dynamic_elements[old_row.id].y = pq_enter_y;
+
+    seq.push([
+      {
+        target: target,
+        translateX: (pq_enter_x - old_row_x) - row_width,
+        translateY: (pq_enter_y - old_row_y)
+      },
+      {
+        target: target,
+        translateX: (pq_exit_x - pq_enter_x)
+      }
+    ]);
+  });
+  
+  return seq;
+}
+
+function anime_commands(seq) {
+  const ms_px = 6.153846153846154;
+  let commands = [];
+  let t = 0;
+
+  seq.forEach(animation => {
+    const intro = 500;
+    const entering_motion = (Math.abs(animation[0].translateX) + Math.abs(animation[0].translateY)) * ms_px;
+    const crossing_motion = (animation[1].translateX) * ms_px;
+    
+    commands.push({
+      params: {
+        targets: animation[0].target,
+        easing: "linear",
+        keyframes: [
+          {
+            duration: intro,
+            opacity: [0, 1]
+          },
+          {
+            duration: entering_motion,
+            translateX: relative_add(animation[0].translateX),
+            translateY: relative_add(animation[0].translateY)
+          },
+          {
+            duration: crossing_motion,
+            translateX: relative_add(animation[1].translateX),
+            fill: ["#6B84FF", "#FFE56B"]
+          }
+        ]
+      },
+      t: t
+    });
+
+    t += intro + entering_motion;
+  });
+
+  return commands;
+}
+
+
+
+
+const actions = run_until_drained(s);
+const animations = animation_sequence(layout, actions);
+const commands = anime_commands(animations);
+
+var controlsProgressEl = $(container + " > .controls > .progress");
+
+const timeline = anime.timeline({
+  update: function(anim) {
+    controlsProgressEl.val(timeline.progress);
+  }
+});
+
+$(container + " > .controls > .play").click(timeline.play);
+$(container + " > .controls > .pause").click(timeline.pause);
+$(container + " > .controls > .restart").click(timeline.restart);
+
+controlsProgressEl.on('input', function() {
+  timeline.seek(timeline.duration * (controlsProgressEl.val() / 100));
+});
+
+commands.forEach(c => timeline.add(c.params, c.t));
