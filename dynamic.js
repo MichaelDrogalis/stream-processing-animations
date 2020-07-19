@@ -361,8 +361,8 @@ function render_dynamic_container(data) {
 function render_dynamic_row(data) {
   const { container, width, height, x, y } = data;
   const { id, collection, partition, offset } = data;
-  
-  const html = `<rect width="${width}" height="${height}" x="${x}" y="${y}" class="row id-${id}"></rect>`;
+
+  const html = `<rect width="${width}" height="${height}" x="${x}" y="${y}" class="row id-${id} collection-${collection} partition-${partition} offset-${offset}"></rect>`;
 
   $("." + container).append(html);  
 }
@@ -539,6 +539,8 @@ function persistent_query_translate_y(data, height) {
   data.brackets.tr.y += height;
   data.brackets.bl.y += height;
   data.brackets.br.y += height;
+
+  data.midpoint_y += height;
 
   data.label.y += height;
   
@@ -728,7 +730,7 @@ Specimen.prototype.render = function(layout, container, styles) {
 
 const styles = {
   svg_target: "system",
-  svg_width: 1200,
+  svg_width: 800,
   svg_height: 500,
 
   dynamic_target: "dynamic-elements",
@@ -1088,6 +1090,14 @@ $(document).ready(function() {
         { value: 20, t: 2 },
         { value: 21, t: 4 },
         { value: 22, t: 6 }
+      ],
+      3: [
+        { value: 10, t: 1 },
+        { value: 11, t: 3 },
+        { value: 12, t: 4 },
+        { value: 13, t: 5 },
+        { value: 14, t: 5 },
+        { value: 15, t: 5 },
       ]
     }
   });
@@ -1106,27 +1116,29 @@ $(document).ready(function() {
     partitions: {
       0: [],
       1: [],
-      2: []
+      2: [],
+      3: []
     }
   });
 
-  s.add_child(["s2"], {
-    name: "pq2",
-    kind: "persistent_query",
-    fn: function(row) {
-      return { ...row, ...{ collection: "s3" } };
-    }
-  });
+  // s.add_child(["s2"], {
+  //   name: "pq2",
+  //   kind: "persistent_query",
+  //   fn: function(row) {
+  //     return { ...row, ...{ collection: "s3" } };
+  //   }
+  // });
 
-  s.add_child(["pq2"], {
-    name: "s3",
-    kind: "collection",
-    partitions: {
-      0: [],
-      1: [],
-      2: []
-    }
-  });
+  // s.add_child(["pq2"], {
+  //   name: "s3",
+  //   kind: "collection",
+  //   partitions: {
+  //     0: [],
+  //     1: [],
+  //     2: [],
+  //     3: []
+  //   }
+  // });
 
   const container = ".animation-container-1";
   const layout = s.horizontal_layout(styles);
