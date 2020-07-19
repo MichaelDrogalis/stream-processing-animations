@@ -728,6 +728,39 @@ Specimen.prototype.render = function(layout, container, styles) {
   $(container).html($(container).html());
 }
 
+Specimen.prototype.animate = function(layout, container, styles) {
+  const layout_index = index_by_name(layout);
+  const { actions, lineage } = run_until_drained(this);
+
+  const dynamic_container_data = build_dynamic_container_data(styles);
+  const dynamic_data = build_dynamic_elements_data(layout_index, actions, styles);
+
+  render_dynamic_container(dynamic_container_data);
+  Object.values(dynamic_data).forEach(data => render_dynamic_row(data));
+  $(container).html($(container).html());
+
+  const animations = animation_sequence(layout_index, dynamic_data, actions, styles);
+  const commands = anime_commands(animations, lineage);
+
+  var controlsProgressEl = $(container + " > .controls > .progress");
+
+  const timeline = anime.timeline({
+    update: function(anim) {
+      controlsProgressEl.val(timeline.progress);
+    }
+  });
+
+  $(container + " > .controls > .play").click(timeline.play);
+  $(container + " > .controls > .pause").click(timeline.pause);
+  $(container + " > .controls > .restart").click(timeline.restart);
+
+  controlsProgressEl.on('input', function() {
+    timeline.seek(timeline.duration * (controlsProgressEl.val() / 100));
+  });
+
+  commands.forEach(c => timeline.add(c.params, c.t));
+}
+
 const styles = {
   svg_target: "system",
   svg_width: 800,
@@ -1039,7 +1072,7 @@ function anime_commands(seq, lineage) {
           {
             duration: crossing_motion,
             translateX: relative_add(animation[1].translateX),
-//            fill: ["#6B84FF", "#FFE56B"]
+            fill: ["#6B84FF", "#FFE56B"]
           },
           {
             duration: exiting_motion,
@@ -1143,35 +1176,5 @@ $(document).ready(function() {
   const container = ".animation-container-1";
   const layout = s.horizontal_layout(styles);
   s.render(layout, container, styles);
-
-  const layout_index = index_by_name(layout);
-  const { actions, lineage } = run_until_drained(s);
-
-  const dynamic_container_data = build_dynamic_container_data(styles);
-  const dynamic_data = build_dynamic_elements_data(layout_index, actions, styles);
-
-  render_dynamic_container(dynamic_container_data);
-  Object.values(dynamic_data).forEach(data => render_dynamic_row(data));
-  $(container).html($(container).html());
-
-  const animations = animation_sequence(layout_index, dynamic_data, actions, styles);
-  const commands = anime_commands(animations, lineage);
-
-  var controlsProgressEl = $(container + " > .controls > .progress");
-
-  const timeline = anime.timeline({
-    update: function(anim) {
-      controlsProgressEl.val(timeline.progress);
-    }
-  });
-
-  $(container + " > .controls > .play").click(timeline.play);
-  $(container + " > .controls > .pause").click(timeline.pause);
-  $(container + " > .controls > .restart").click(timeline.restart);
-
-  controlsProgressEl.on('input', function() {
-    timeline.seek(timeline.duration * (controlsProgressEl.val() / 100));
-  });
-
-  commands.forEach(c => timeline.add(c.params, c.t));
+  s.animate(layout, container, styles);
 });
