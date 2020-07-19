@@ -732,7 +732,7 @@ Specimen.prototype.render = function(layout, container, styles) {
 
 const styles = {
   svg_target: "system",
-  svg_width: 1200,
+  svg_width: 1000,
   svg_height: 500,
 
   pq_width: 150,
@@ -884,6 +884,11 @@ s.add_root({
       { value: 31, t: 3 },
       { value: 32, t: 5 },
       { value: 33, t: 6 }
+    ],
+    2: [
+      { value: 20, t: 2 },
+      { value: 21, t: 4 },
+      { value: 22, t: 6 }
     ]
   }
 });
@@ -901,7 +906,8 @@ s.add_child(["pq1"], {
   kind: "collection",
   partitions: {
     0: [],
-    1: []
+    1: [],
+    2: []
   }
 });
 
