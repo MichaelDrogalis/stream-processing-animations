@@ -141,6 +141,7 @@ function build_partition_data(coll, rows, styles, computed) {
   const { part_bracket_len, part_width, part_height, part_id_margin_top, part_id_margin_left } = styles;
   const { consumer_m_init_margin_left, consumer_m_margin_bottom,
           consumer_m_text_margin_bottom, consumer_m_offset_bottom } = styles;
+  const { row_height } = styles;
   const { part, consumers, top_y, midpoint_x, container } = computed;
 
   const b_len = part_bracket_len;
@@ -148,6 +149,7 @@ function build_partition_data(coll, rows, styles, computed) {
   const left_x = midpoint_x - (part_width / 2);
   const right_x = midpoint_x + (part_width / 2);
   const bottom_y = top_y + part_height;
+  const midpoint_y = top_y + (part_height / 2) - (row_height / 2);
 
   const rows_data = build_rows_data(rows, styles, { right_x: right_x, top_y: top_y });
   const shadow_rows_data = build_shadow_rows_data(rows, styles, { right_x: right_x, top_y: top_y });
@@ -193,6 +195,7 @@ function build_partition_data(coll, rows, styles, computed) {
         h: -b_len
       }
     },
+    midpoint_y: midpoint_y,
     rows: rows_data,
     shadow_rows: shadow_rows_data
   };
@@ -512,6 +515,8 @@ function collection_translate_y(data, height) {
     partition.brackets.tr.y += height;
     partition.brackets.bl.y += height;
     partition.brackets.br.y += height;
+
+    partition.midpoint_y += height;
 
     partition.rows = partition.rows.map(row => {
       row.y += height;
@@ -989,13 +994,15 @@ function run_until_drained(specimen) {
   return actions;
 }
 
-function animation_sequence(layout, actions) {
+function animation_sequence(layout, actions, styles) {
+  const { row_width, row_margin_left, row_offset_right } = styles;
+  
   const layout_index = index_by_name(layout);
   let dynamic_elements = index_rows(layout);
   let seq = [];
 
   actions.forEach(action => {
-    const { old_row } = action;
+    const { old_row, new_row } = action;
     const target = `.row.collection-${old_row.collection}.partition-${old_row.partition}.offset-${old_row.offset}`;
 
     const old_row_position = dynamic_elements[old_row.id];
@@ -1008,9 +1015,18 @@ function animation_sequence(layout, actions) {
     const pq_enter_x = pq_data.brackets.bl.x;
     const pq_enter_y = pq_data.midpoint_y;
     const pq_exit_x = pq_data.brackets.br.x;
+    const pq_exit_y = pq_enter_y;
 
-    dynamic_elements[old_row.id].x = pq_enter_x;
-    dynamic_elements[old_row.id].y = pq_enter_y;
+    const new_part_x = layout_index[new_row.collection].partitions[new_row.partition].brackets.bl.x;
+    const new_part_y = layout_index[new_row.collection].partitions[new_row.partition].midpoint_y;
+
+    const new_part_start_x = layout_index[new_row.collection].partitions[new_row.partition].brackets.tr.x;
+    const new_part_margin = ((new_row.offset - 1) * row_margin_left);
+    const new_part_spacing = (new_row.offset * row_width);
+    const new_row_x = new_part_start_x - new_part_margin - row_offset_right - new_part_spacing;
+
+    dynamic_elements[old_row.id].x = new_row_x;
+    dynamic_elements[old_row.id].y = new_part_y;
 
     seq.push([
       {
@@ -1021,6 +1037,15 @@ function animation_sequence(layout, actions) {
       {
         target: target,
         translateX: (pq_exit_x - pq_enter_x)
+      },
+      {
+        target: target,
+        translateX: (new_part_x - pq_exit_x),
+        translateY: (new_part_y - pq_exit_y)
+      },
+      {
+        target: target,
+        translateX: (new_row_x - new_part_x)
       }
     ]);
   });
@@ -1029,15 +1054,17 @@ function animation_sequence(layout, actions) {
 }
 
 function anime_commands(seq) {
-  const ms_px = 6.153846153846154;
+  const ms_px = 3;
   let commands = [];
   let t = 0;
 
   seq.forEach(animation => {
-    const intro = 500;
+    const intro = 250;
     const entering_motion = (Math.abs(animation[0].translateX) + Math.abs(animation[0].translateY)) * ms_px;
     const crossing_motion = (animation[1].translateX) * ms_px;
-    
+    const exiting_motion = (Math.abs(animation[2].translateX) + Math.abs(animation[2].translateY)) * ms_px;
+    const settling_motion = (animation[3].translateX) * ms_px;
+
     commands.push({
       params: {
         targets: animation[0].target,
@@ -1056,6 +1083,15 @@ function anime_commands(seq) {
             duration: crossing_motion,
             translateX: relative_add(animation[1].translateX),
             fill: ["#6B84FF", "#FFE56B"]
+          },
+          {
+            duration: exiting_motion,
+            translateX: relative_add(animation[2].translateX),
+            translateY: relative_add(animation[2].translateY)
+          },
+          {
+            duration: settling_motion,
+            translateX: relative_add(animation[3].translateX)
           }
         ]
       },
@@ -1072,7 +1108,7 @@ function anime_commands(seq) {
 
 
 const actions = run_until_drained(s);
-const animations = animation_sequence(layout, actions);
+const animations = animation_sequence(layout, actions, styles);
 const commands = anime_commands(animations);
 
 var controlsProgressEl = $(container + " > .controls > .progress");
